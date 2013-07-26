@@ -593,6 +593,32 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
   script.ValidateSignatures("data")
   script.Unmount("/data")
 
+  script.Print("                                        ");
+  script.Print("                8OOOO8                  ");
+  script.Print("           88888O88O888888D             ");
+  script.Print("         88888888888888888888           ");
+  script.Print("       8888888888888888888888D8         ");
+  script.Print("     8DD8888888888888888888D8DDD        ");
+  script.Print("    DDDDDD8888888888888888DDDD          ");
+  script.Print("   DDDDDDDD8           NDDDD8           ");
+  script.Print("   DDDDDD                 D             ");
+  script.Print("  DDDDDD N                              ");
+  script.Print("  DDDD  NN                              ");
+  script.Print("  NND  NNN                              ");
+  script.Print("  NNN NNNN                              ");
+  script.Print("  NN  NNNN                              ");
+  script.Print("  NN NNNNDN                             ");
+  script.Print("   N NNNDNN8                        D   ");
+  script.Print("   N NNDN  D8                     NN    ");
+  script.Print("    N 8  D8  DD                  DD8    ");
+  script.Print("      NNN   DD  DN                      ");
+  script.Print("          DDN  DDN  NDDDDD              ");
+  script.Print("         NNN  NDD8   DDDDDD             ");
+  script.Print("              DDD    DDDDDDD            ");
+  script.Print("              DDD    DDDDND             ");
+  script.Print("                                        ");
+  script.Print("                           carbonrom.org");
+
   if "selinux_fc" in OPTIONS.info_dict:
     WritePolicyConfig(OPTIONS.info_dict["selinux_fc"], output_zip)
 
@@ -610,10 +636,13 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
     system_diff = common.BlockDifference("system", system_tgt, src=None)
     system_diff.WriteScript(script, output_zip)
   else:
+    script.Print("Formating System...")
     script.FormatPartition("/system")
+    script.Print("Mounting System...")
     script.Mount("/system", recovery_mount_options)
     if not has_recovery_patch:
       script.UnpackPackageDir("recovery", "/system")
+    script.Print("Installing System...")
     script.UnpackPackageDir("system", "/system")
     symlinks = CopyPartitionFiles(system_items, input_zip, output_zip)
     script.MakeSymlinks(symlinks)
