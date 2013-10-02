@@ -19,8 +19,8 @@ Invoke ". build/envsetup.sh" from your shell to add the following functions to y
 - resgrep: Greps on all local res/*.xml files.
 - sgrep:   Greps on all local source files.
 - godir:   Go to the directory containing a file.
-- cmremote: Add git remote for CM Gerrit Review
-- cmgerrit: A Git wrapper that fetches/pushes patch from/to CM Gerrit Review
+- crremote: Add git remote for Carbon Gerrit Review.
+- crrebase: Rebase a Gerrit change and push it again.
 - cmrebase: Rebase a Gerrit change and push it again
 - aospremote: Add git remote for matching AOSP repository
 - cafremote: Add git remote for matching CodeAurora repository.
@@ -1552,6 +1552,75 @@ function godir () {
         pathname=${lines[0]}
     fi
     \cd $T/$pathname
+}
+
+function crremote()
+{
+    git remote rm crremote 2> /dev/null
+    if [ ! -d .git ]
+    then
+        echo .git directory not found. Please run this from the root directory of the Android repository you wish to set up.
+    fi
+    GERRIT_REMOTE=$(cat .git/config  | grep git://github.com | awk '{ print $NF }' | sed s#git://github.com/##g)
+    if [ -z "$GERRIT_REMOTE" ]
+    then
+        GERRIT_REMOTE=$(cat .git/config  | grep http://github.com | awk '{ print $NF }' | sed s#http://github.com/##g)
+        if [ -z "$GERRIT_REMOTE" ]
+        then
+          echo Unable to set up the git remote, are you in the root of the repo?
+          return 0
+        fi
+    fi
+    CRUSER=`git config --get review.review.carbon-rom.com.username`
+    if [ -z "$CRUSER" ]
+    then
+        git remote add crremote ssh://review.carbon-rom.com:29419/$GERRIT_REMOTE
+    else
+        git remote add crremote ssh://$CRUSER@review.carbon-rom.com:29419/$GERRIT_REMOTE
+    fi
+    echo You can now push to "crremote".
+}
+export -f crremote
+
+function crrebase() {
+    local repo=$1
+    local refs=$2
+    local pwd="$(pwd)"
+    local dir="$(gettop)/$repo"
+
+    if [ -z $repo ] || [ -z $refs ]; then
+        echo "CarbonRom Gerrit Rebase Usage: "
+        echo "      crrebase <path to project> <patch IDs on Gerrit>"
+        echo "      The patch IDs appear on the Gerrit commands that are offered."
+        echo "      They consist on a series of numbers and slashes, after the text"
+        echo "      refs/changes. For example, the ID in the following command is 26/8126/2"
+        echo ""
+        echo "      git[...]ges_apps_Camera refs/changes/26/8126/2 && git cherry-pick FETCH_HEAD"
+        echo ""
+        return
+    fi
+
+    if [ ! -d $dir ]; then
+        echo "Directory $dir doesn't exist in tree."
+        return
+    fi
+    cd $dir
+    repo=$(cat .git/config  | grep git://github.com | awk '{ print $NF }' | sed s#git://github.com/##g)
+    echo "Starting branch..."
+    repo start tmprebase .
+    echo "Bringing it up to date..."
+    repo sync .
+    echo "Fetching change..."
+    git fetch "http://review.carbon-rom.com/p/$repo" "refs/changes/$refs" && git cherry-pick FETCH_HEAD
+    if [ "$?" != "0" ]; then
+        echo "Error cherry-picking. Not uploading!"
+        return
+    fi
+    echo "Uploading..."
+    repo upload .
+    echo "Cleaning up..."
+    repo abandon tmprebase .
+    cd $pwd
 }
 
 function aospremote()
