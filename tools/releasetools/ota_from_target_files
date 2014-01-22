@@ -589,16 +589,29 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
     script.Print("Formatting /data")
     script.FormatPartition("/data", OPTIONS.mount_by_label)
 
-  script.Print("#######################################");
-  script.Print("# _____            __  __  ______     #");
-  script.Print("#/\  __`\  /'\_/`\/\ \/\ \/\__  _\    #");
-  script.Print("#\ \ \/\ \/\  ``  \ \ ` \ \/_/\ \/    #");
-  script.Print("# \ \ \ \ \ \ \__\ \ \ . ` \ \ \ \    #");
-  script.Print("#  \ \ \_\ \ \ \_/\ \ \ \`\ \ \_\ \__ #");
-  script.Print("#   \ \_____\ \_\, \_\ \_\ \_\/\_____\#");
-  script.Print("#    \/_____/\/_/ \/_/\/_/\/_/\/_____/#");
-  script.Print("#                                     #");
-  script.Print("#######################################");
+  script.Print("                                        ");
+  script.Print("                                        ");
+  script.Print("            ..;codxxddl:,.              ");
+  script.Print("        .,d0WMMMMMMMMMMMMMXkc.          ");
+  script.Print("      .dNMMMMMMMMMMMMMMMMMMMMM0:        ");
+  script.Print("    .kMMMMMMMMMMMMMMMMMMMMMMMMMMX.      ");
+  script.Print("   :WMMMMMMMMMMWNXXNWMMMMMMMMMMk'       ");
+  script.Print("  lMMMMMMMXxc,.      .,cxXMMWx.         ");
+  script.Print(" ;MMMMMW`'              ;'7l;           ");
+  script.Print(" KMMMM7 d;               `;`            ");
+  script.Print(".MMMW .mM:                              ");
+  script.Print("'MMM ,MMlx                              ");
+  script.Print(".WMO nMMMW'                           .l");
+  script.Print(" dMl MMMMMN'                         .x.");
+  script.Print(" .Xl MMMMMMWl.                      ;N; ");
+  script.Print("  .d`MMMMMMMMXc.                 .:KMo  ");
+  script.Print("   ..dMMMMMMMMMWOl'.         .. .XMW:   ");
+  script.Print("      ;KMMMMMMMMMMMMX0kxxxkOKW .0Mk.    ");
+  script.Print("       .;OMMMMMMMMMMMMMMMMMMK ;Kd.      ");
+  script.Print("          .:xXMMMMMMMMMMMWk  ,SP        ");
+  script.Print("             .':lodxddltl7` d'`         ");
+  script.Print("                                        ");
+  script.Print("                                        ");
 
   system_progress = 0.75
 
