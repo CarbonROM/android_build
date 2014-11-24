@@ -19,9 +19,8 @@ Invoke ". build/envsetup.sh" from your shell to add the following functions to y
 - resgrep: Greps on all local res/*.xml files.
 - sgrep:   Greps on all local source files.
 - godir:   Go to the directory containing a file.
-- crremote: Add git remote for Carbon Gerrit Review.
+- crremote: Add git remote for CarbonROM Gerrit Review.
 - crrebase: Rebase a Gerrit change and push it again.
-- cmrebase: Rebase a Gerrit change and push it again
 - aospremote: Add git remote for matching AOSP repository
 - cafremote: Add git remote for matching CodeAurora repository.
 - mka:      Builds using SCHED_BATCH on all processors
@@ -701,7 +700,7 @@ function tapas()
 function eat()
 {
     if [ "$OUT" ] ; then
-        MODVERSION=$(get_build_var CCARBON_VERSION)
+        MODVERSION=$(get_build_var CARBON_VERSION)
         ZIPFILE=carbon-$MODVERSION.zip
         ZIPPATH=$OUT/$ZIPFILE
         if [ ! -f $ZIPPATH ] ; then
@@ -1571,12 +1570,12 @@ function crremote()
           return 0
         fi
     fi
-    CRUSER=`git config --get review.review.carbon-rom.com.username`
+    CRUSER=`git config --get review.review.carbonrom.org.username`
     if [ -z "$CRUSER" ]
     then
-        git remote add crremote ssh://review.carbon-rom.com:29419/$GERRIT_REMOTE
+        git remote add crremote ssh://review.carbonrom.org:29418/$GERRIT_REMOTE
     else
-        git remote add crremote ssh://$CRUSER@review.carbon-rom.com:29419/$GERRIT_REMOTE
+        git remote add crremote ssh://$CRUSER@review.carbonrom.org:29418/$GERRIT_REMOTE
     fi
     echo You can now push to "crremote".
 }
@@ -1589,7 +1588,7 @@ function crrebase() {
     local dir="$(gettop)/$repo"
 
     if [ -z $repo ] || [ -z $refs ]; then
-        echo "CarbonRom Gerrit Rebase Usage: "
+        echo "CarbonROM Gerrit Rebase Usage: "
         echo "      crrebase <path to project> <patch IDs on Gerrit>"
         echo "      The patch IDs appear on the Gerrit commands that are offered."
         echo "      They consist on a series of numbers and slashes, after the text"
@@ -1611,7 +1610,7 @@ function crrebase() {
     echo "Bringing it up to date..."
     repo sync .
     echo "Fetching change..."
-    git fetch "http://review.carbon-rom.com/p/$repo" "refs/changes/$refs" && git cherry-pick FETCH_HEAD
+    git fetch "http://review.carbonrom.org/p/$repo" "refs/changes/$refs" && git cherry-pick FETCH_HEAD
     if [ "$?" != "0" ]; then
         echo "Error cherry-picking. Not uploading!"
         return
