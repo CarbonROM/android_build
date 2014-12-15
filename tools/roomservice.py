@@ -176,7 +176,7 @@ def add_to_manifest(repositories, fallback_branch = None):
 
         print('Adding dependency: CarbonROM/%s -> %s' % (repo_name, repo_target))
         project = ElementTree.Element("project", attrib = { "path": repo_target,
-            "remote": "carbon", "name": "CarbonROM/%s" % repo_name })
+            "name": "CarbonROM/%s" % repo_name, "remote": "carbon", "revision": "lollipop" })
 
         if 'branch' in repository:
             project.set('revision',repository['branch'])
@@ -246,7 +246,7 @@ else:
             
             manufacturer = repo_name.replace("android_device_", "").replace("_" + device, "")
             
-            default_revision = get_default_revision()
+            default_revision = "lollipop"
             print("Default revision: %s" % default_revision)
             print("Checking branch info")
             githubreq = urllib.request.Request(repository['branches_url'].replace('{/branch}', ''))
