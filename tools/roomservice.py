@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # Copyright (C) 2012-2013, The CyanogenMod Project
+# Updated by CarbonROM 2014
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -51,7 +52,7 @@ except:
     device = product
 
 if not depsonly:
-    print("Device %s not found. Attempting to retrieve device repository from Carbon Github (http://github.com/CarbonDev)." % device)
+    print("Device %s not found. Attempting to retrieve device repository from Carbon's Github (https://github.com/CarbonROM)." % device)
 
 repositories = []
 
@@ -71,7 +72,7 @@ def add_auth(githubreq):
 
 page = 1
 while not depsonly:
-    githubreq = urllib.request.Request("https://api.github.com/users/CarbonDev/repos?per_page=200&page=%d" % page)
+    githubreq = urllib.request.Request("https://api.github.com/users/CarbonROM/repos?per_page=200&page=%d" % page)
     add_auth(githubreq)
     result = json.loads(urllib.request.urlopen(githubreq).read().decode())
     if len(result) == 0:
@@ -170,12 +171,12 @@ def add_to_manifest(repositories, fallback_branch = None):
         repo_name = repository['repository']
         repo_target = repository['target_path']
         if exists_in_tree(lm, repo_name):
-            print('CarbonDev/%s already exists' % (repo_name))
+            print('CarbonROM/%s already exists' % (repo_name))
             continue
 
-        print('Adding dependency: CarbonDev/%s -> %s' % (repo_name, repo_target))
+        print('Adding dependency: CarbonROM/%s -> %s' % (repo_name, repo_target))
         project = ElementTree.Element("project", attrib = { "path": repo_target,
-            "name": "CarbonROM/%s" % repo_name, "remote": "carbon", "revision": "lollipop" })
+            "remote": "carbon", "name": "CarbonROM/%s" % repo_name })
 
         if 'branch' in repository:
             project.set('revision',repository['branch'])
@@ -206,7 +207,7 @@ def fetch_dependencies(repo_path, fallback_branch = None):
         fetch_list = []
 
         for dependency in dependencies:
-            if not is_in_manifest("CarbonDev/%s" % dependency['repository']):
+            if not is_in_manifest("CarbonROM/%s" % dependency['repository']):
                 fetch_list.append(dependency)
                 syncable_repos.append(dependency['target_path'])
 
