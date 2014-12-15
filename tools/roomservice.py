@@ -175,7 +175,7 @@ def add_to_manifest(repositories, fallback_branch = None):
 
         print('Adding dependency: CarbonDev/%s -> %s' % (repo_name, repo_target))
         project = ElementTree.Element("project", attrib = { "path": repo_target,
-            "remote": "gh", "name": "CarbonDev/%s" % repo_name })
+            "name": "CarbonROM/%s" % repo_name, "remote": "carbon", "revision": "lollipop" })
 
         if 'branch' in repository:
             project.set('revision',repository['branch'])
@@ -242,10 +242,10 @@ else:
         repo_name = repository['name']
         if repo_name.startswith("android_device_") and repo_name.endswith("_" + device):
             print("Found repository: %s" % repository['name'])
-            
+
             manufacturer = repo_name.replace("android_device_", "").replace("_" + device, "")
-            
-            default_revision = get_default_revision()
+
+            default_revision = "lollipop"
             print("Default revision: %s" % default_revision)
             print("Checking branch info")
             githubreq = urllib.request.Request(repository['branches_url'].replace('{/branch}', ''))
@@ -257,10 +257,10 @@ else:
                 githubreq = urllib.request.Request(repository['tags_url'].replace('{/tag}', ''))
                 add_auth(githubreq)
                 result.extend (json.loads(urllib.request.urlopen(githubreq).read().decode()))
-            
+
             repo_path = "device/%s/%s" % (manufacturer, device)
             adding = {'repository':repo_name,'target_path':repo_path}
-            
+
             fallback_branch = None
             if not has_branch(result, default_revision):
                 if os.getenv('ROOMSERVICE_BRANCHES'):
