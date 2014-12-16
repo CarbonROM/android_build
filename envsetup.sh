@@ -1556,19 +1556,14 @@ function godir () {
 function crremote()
 {
     git remote rm crremote 2> /dev/null
-    if [ ! -d .git ]
-    then
-        echo .git directory not found. Please run this from the root directory of the Android repository you wish to set up.
-    fi
-    # We only use https now
-    GERRIT_REMOTE=$(cat .git/config  | grep https://github.com | awk '{ print $NF }' | sed s#https://github.com/##g)
+    GERRIT_REMOTE=$(git config --get remote.github.projectname)
     if [ -z "$GERRIT_REMOTE" ]
     then
-      echo Unable to set up the git remote, are you in the root of the repo?
-      return 0
+        echo Unable to set up the git remote, are you under a git repo?
+        return 0
     fi
     # Get user from git config
-    CRUSER=`git config --get review.review.carbonrom.org.username`
+    CRUSER=$(git config --get review.review.carbonrom.org.username)
     if [ -z "$CRUSER" ]
     then
         echo "Sorry, you must run git config --global review.review.carbonrom.org YOUR_USERNAME first"
