@@ -1560,20 +1560,18 @@ function crremote()
     then
         echo .git directory not found. Please run this from the root directory of the Android repository you wish to set up.
     fi
-    GERRIT_REMOTE=$(cat .git/config  | grep git://github.com | awk '{ print $NF }' | sed s#git://github.com/##g)
+    # We only use https now
+    GERRIT_REMOTE=$(cat .git/config  | grep https://github.com | awk '{ print $NF }' | sed s#https://github.com/##g)
     if [ -z "$GERRIT_REMOTE" ]
     then
-        GERRIT_REMOTE=$(cat .git/config  | grep http://github.com | awk '{ print $NF }' | sed s#http://github.com/##g)
-        if [ -z "$GERRIT_REMOTE" ]
-        then
-          echo Unable to set up the git remote, are you in the root of the repo?
-          return 0
-        fi
+      echo Unable to set up the git remote, are you in the root of the repo?
+      return 0
     fi
+    # Get user from git config
     CRUSER=`git config --get review.review.carbonrom.org.username`
     if [ -z "$CRUSER" ]
     then
-        git remote add crremote ssh://review.carbonrom.org:29418/$GERRIT_REMOTE
+        echo "Sorry, you must run git config --global review.review.carbonrom.org YOUR_USERNAME first"
     else
         git remote add crremote ssh://$CRUSER@review.carbonrom.org:29418/$GERRIT_REMOTE
     fi
