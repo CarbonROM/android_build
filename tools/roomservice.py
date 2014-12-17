@@ -160,7 +160,58 @@ def is_in_manifest(projectname):
 
     return None
 
-def add_to_manifest(repositories, fallback_branch = None):
+def does_remote_exist(remote):
+    try:
+        lm = ElementTree.parse(".repo/local_manifests/roomservice.xml")
+        lm = lm.getroot()
+    except:
+        lm = ElementTree.Element("manifest")
+
+    for localpath in lm.findall("remote"):
+        if localpath.get("name") == remote:
+            return 1
+
+    ## Search in main manifest, too
+    try:
+        lm = ElementTree.parse(".repo/manifest.xml")
+        lm = lm.getroot()
+    except:
+        lm = ElementTree.Element("manifest")
+
+    for localpath in lm.findall("remote"):
+        if localpath.get("remote") == remote:
+            return 1
+
+    return None
+
+def add_remotes_to_manifest(remotes):
+    try:
+        lm = ElementTree.parse(".repo/local_manifests/roomservice.xml")
+        lm = lm.getroot()
+    except:
+        lm = ElementTree.Element("manifest")
+
+    for remote in remotes:
+        remote_name = remote['remote_name']
+        remote_url = remote['url']
+
+        if exists_in_tree(lm, remote_name):
+            print('%s already exists' % (remote_name))
+            continue
+
+        print('Adding remote: %s -> %s' % (remote_name, remote_url))
+        final_remote = ElementTree.Element("remote", attrib = { "name": remote_name, "fetch": remote_url })
+
+        lm = [project] + lm
+
+    indent(lm, 0)
+    raw_xml = ElementTree.tostring(lm).decode()
+
+    f = open('.repo/local_manifests/roomservice.xml', 'w')
+    f.write(raw_xml)
+    f.close()
+
+def add_to_manifest(repositories):
     try:
         lm = ElementTree.parse(".repo/local_manifests/roomservice.xml")
         lm = lm.getroot()
@@ -170,33 +221,35 @@ def add_to_manifest(repositories, fallback_branch = None):
     for repository in repositories:
         repo_name = repository['repository']
         repo_target = repository['target_path']
+        repo_remote = "carbon"
+        repo_branch = "lollipop"
+
+        print('Adding dependency: %s -> %s' % (repo_name, repo_target))
+        project = ElementTree.Element("project", attrib = { "path": repo_target, "name": repo_name, "remote": repo_remote, "revision": repo_branch })
+
+        # Override remote if specified
+        if 'remote' in repository:
+            project.set('remote',repository['remote'])
+
+        # Override branch if specified
+        if 'revision' in repository:
+            project.set('revision',repository['revision'])
+
+        # Check if it exists in manifest already
         if exists_in_tree(lm, repo_name):
-            print('CarbonROM/%s already exists' % (repo_name))
+            print('%s already exists' % (repo_name))
             continue
-
-        print('Adding dependency: CarbonROM/%s -> %s' % (repo_name, repo_target))
-        project = ElementTree.Element("project", attrib = { "path": repo_target,
-            "name": "CarbonROM/%s" % repo_name, "remote": "carbon", "revision": "lollipop" })
-
-        if 'branch' in repository:
-            project.set('revision',repository['branch'])
-        elif fallback_branch:
-            print("Using fallback branch %s for %s" % (fallback_branch, repo_name))
-            project.set('revision', fallback_branch)
-        else:
-            print("Using default branch for %s" % repo_name)
 
         lm.append(project)
 
     indent(lm, 0)
     raw_xml = ElementTree.tostring(lm).decode()
-    raw_xml = '<?xml version="1.0" encoding="UTF-8"?>\n' + raw_xml
 
     f = open('.repo/local_manifests/roomservice.xml', 'w')
     f.write(raw_xml)
     f.close()
 
-def fetch_dependencies(repo_path, fallback_branch = None):
+def fetch_dependencies(repo_path):
     print('Looking for dependencies')
     dependencies_path = repo_path + '/carbon.dependencies'
     syncable_repos = []
@@ -204,24 +257,33 @@ def fetch_dependencies(repo_path, fallback_branch = None):
     if os.path.exists(dependencies_path):
         dependencies_file = open(dependencies_path, 'r')
         dependencies = json.loads(dependencies_file.read())
+        remote_list = []
         fetch_list = []
 
         for dependency in dependencies:
-            if not is_in_manifest("CarbonROM/%s" % dependency['repository']):
+            # Handle remotes
+            if dependency.has_key("remote_name"):
+                remote_list.append(dependency)
+            # Handle projects
+            elif not is_in_manifest(dependency['repository']):
                 fetch_list.append(dependency)
                 syncable_repos.append(dependency['target_path'])
 
         dependencies_file.close()
 
+        if len(remote_list) > 0:
+            print('adding remotes to local manifest')
+            add_remotes_to_manifest(remote_list)
+
         if len(fetch_list) > 0:
             print('Adding dependencies to manifest')
-            add_to_manifest(fetch_list, fallback_branch)
+            add_to_manifest(fetch_list)
     else:
         print('Dependencies file not found, bailing out.')
 
     if len(syncable_repos) > 0:
         print('Syncing dependencies')
-        os.system('repo sync %s' % ' '.join(syncable_repos))
+        os.system('repo sync -j16')
 
     for deprepo in syncable_repos:
         fetch_dependencies(deprepo)
@@ -260,7 +322,7 @@ else:
                 result.extend (json.loads(urllib.request.urlopen(githubreq).read().decode()))
             
             repo_path = "device/%s/%s" % (manufacturer, device)
-            adding = {'repository':repo_name,'target_path':repo_path}
+            adding = {'repository':'CarbonROM/'+repo_name, 'target_path':repo_path}
             
             fallback_branch = None
             if not has_branch(result, default_revision):
@@ -280,13 +342,13 @@ else:
                     print("Use the ROOMSERVICE_BRANCHES environment variable to specify a list of fallback branches.")
                     sys.exit()
 
-            add_to_manifest([adding], fallback_branch)
+            add_to_manifest([adding])
 
             print("Syncing repository to retrieve project.")
             os.system('repo sync %s' % repo_path)
             print("Repository synced!")
 
-            fetch_dependencies(repo_path, fallback_branch)
+            fetch_dependencies(repo_path)
             print("Done")
             sys.exit()
 
