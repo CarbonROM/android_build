@@ -1571,7 +1571,8 @@ function crremote()
     CRUSER=`git config --get review.review.carbonrom.org.username`
     if [ -z "$CRUSER" ]
     then
-        echo "Sorry, you must run git config --global review.review.carbonrom.org YOUR_USERNAME first"
+        echo "Sorry, you must run git config --global review.review.carbonrom.org.username YOUR_USERNAME first"
+        return 1 #End the function; don't report that user can push
     else
         git remote add crremote ssh://$CRUSER@review.carbonrom.org:29418/$GERRIT_REMOTE
     fi
