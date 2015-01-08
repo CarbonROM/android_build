@@ -74,10 +74,15 @@ page = 1
 while not depsonly:
     githubreq = urllib.request.Request("https://api.github.com/users/CarbonROM/repos?per_page=200&page=%d" % page)
     add_auth(githubreq)
-    result = json.loads(urllib.request.urlopen(githubreq).read().decode())
-    if len(result) == 0:
-        break
-    for res in result:
+    try:
+        result = json.loads(urllib.request.urlopen(githubreq).read().decode())
+    except urllib.error.URLError:
+        print("Failed to search GitHub")
+        sys.exit()
+    except ValueError:
+        print("Failed to parse return data from GitHub")
+        sys.exit()
+    for res in result.get('items', []):
         repositories.append(res)
     page = page + 1
 
@@ -305,9 +310,9 @@ else:
         repo_name = repository['name']
         if repo_name.startswith("android_device_") and repo_name.endswith("_" + device):
             print("Found repository: %s" % repository['name'])
-            
+
             manufacturer = repo_name.replace("android_device_", "").replace("_" + device, "")
-            
+
             default_revision = "lollipop"
             print("Default revision: %s" % default_revision)
             print("Checking branch info")
@@ -320,10 +325,10 @@ else:
                 githubreq = urllib.request.Request(repository['tags_url'].replace('{/tag}', ''))
                 add_auth(githubreq)
                 result.extend (json.loads(urllib.request.urlopen(githubreq).read().decode()))
-            
+
             repo_path = "device/%s/%s" % (manufacturer, device)
             adding = {'repository':'CarbonROM/'+repo_name, 'target_path':repo_path}
-            
+
             fallback_branch = None
             if not has_branch(result, default_revision):
                 if os.getenv('ROOMSERVICE_BRANCHES'):
