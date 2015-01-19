@@ -602,30 +602,30 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
   script.Unmount("/data")
   script.AppendExtra("endif;")
 
-  script.Print("                                        ");
-  script.Print("                8OOOO8                  ");
-  script.Print("           88888O88O888888D             ");
-  script.Print("         88888888888888888888           ");
-  script.Print("       8888888888888888888888D8         ");
-  script.Print("     8DD8888888888888888888D8DDD        ");
-  script.Print("    DDDDDD8888888888888888DDDD          ");
-  script.Print("   DDDDDDDD8           NDDDD8           ");
-  script.Print("   DDDDDD                 D             ");
-  script.Print("  DDDDDD N                              ");
-  script.Print("  DDDD  NN                              ");
-  script.Print("  NND  NNN                              ");
-  script.Print("  NNN NNNN                              ");
-  script.Print("  NN  NNNN                              ");
-  script.Print("  NN NNNNDN                             ");
-  script.Print("   N NNNDNN8                        D   ");
-  script.Print("   N NNDN  D8                     NN    ");
-  script.Print("    N 8  D8  DD                  DD8    ");
-  script.Print("      NNN   DD  DN                      ");
-  script.Print("          DDN  DDN  NDDDDD              ");
-  script.Print("         NNN  NDD8   DDDDDD             ");
-  script.Print("              DDD    DDDDDDD            ");
-  script.Print("              DDD    DDDDND             ");
-  script.Print("                                        ");
+  script.Print("                 ,....,                 ");
+  script.Print("           .,lx0XNWWWNKOd:.             ");
+  script.Print("        .:OWMMMMMMMMMMMMMMMXo.          ");
+  script.Print("      .oWMMMMMMMMMMMMMMMMMMMMM0,        ");
+  script.Print("     cWMMMMMMMMMMMMMMMMMMMMMMMMMO.      ");
+  script.Print("   .OMMMMMMMMMMMMMMMMMMMMMMMMMMWd.      ");
+  script.Print("  .KMMMMMMMMMKkdlllldkKMMMMMMMO.        ");
+  script.Print("  OMMMM`  x;.          .;xWMX;          ");
+  script.Print(" :MMMM  ..`               .;.           ");
+  script.Print(" KMMM  .o;                              ");
+  script.Print(".MMM  .0M;                              ");
+  script.Print("'MM` .KMMl                              ");
+  script.Print(".MN  xMMM0                              ");
+  script.Print(".NM ,MMMMM:                           ..");
+  script.Print(" dM :MMMMMW'                         .k ");
+  script.Print(" .N cMMMMMMW;                       'Xc ");
+  script.Print("  ,x;MMMMMMMMx.                   .oW0. ");
+  script.Print("   ,.NMMMMMMMMWx'                lNMK.  ");
+  script.Print("     ,NMMMMMMMMMMXx:'.     ..:o ,MMO.   ");
+  script.Print("      .kMMMMMMMMMMMMMMNXXXNMMW  NWl.    ");
+  script.Print("        ,OMMMMMMMMMMMMMMMMMMK  Xd.      ");
+  script.Print("          .oKMMMMMMMMMMMMMKc  :.        ");
+  script.Print("             .:okKNWWWNKdl'  '          ");
+  script.Print("                 ''...`',  +'           ");
   script.Print("                           carbonrom.org");
 
   if "selinux_fc" in OPTIONS.info_dict:
