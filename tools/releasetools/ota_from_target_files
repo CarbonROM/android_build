@@ -602,31 +602,11 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
   script.Unmount("/data")
   script.AppendExtra("endif;")
 
-  script.Print("                 ,....,                 ");
-  script.Print("           .,lx0XNWWWNKOd:.             ");
-  script.Print("        .:OWMMMMMMMMMMMMMMMXo.          ");
-  script.Print("      .oWMMMMMMMMMMMMMMMMMMMMM0,        ");
-  script.Print("     cWMMMMMMMMMMMMMMMMMMMMMMMMMO.      ");
-  script.Print("   .OMMMMMMMMMMMMMMMMMMMMMMMMMMWd.      ");
-  script.Print("  .KMMMMMMMMMKkdlllldkKMMMMMMMO.        ");
-  script.Print("  OMMMM`  x;.          .;xWMX;          ");
-  script.Print(" :MMMM  ..`               .;.           ");
-  script.Print(" KMMM  .o;                              ");
-  script.Print(".MMM  .0M;                              ");
-  script.Print("'MM` .KMMl                              ");
-  script.Print(".MN  xMMM0                              ");
-  script.Print(".NM ,MMMMM:                           ..");
-  script.Print(" dM :MMMMMW'                         .k ");
-  script.Print(" .N cMMMMMMW;                       'Xc ");
-  script.Print("  ,x;MMMMMMMMx.                   .oW0. ");
-  script.Print("   ,.NMMMMMMMMWx'                lNMK.  ");
-  script.Print("     ,NMMMMMMMMMMXx:'.     ..:o ,MMO.   ");
-  script.Print("      .kMMMMMMMMMMMMMMNXXXNMMW  NWl.    ");
-  script.Print("        ,OMMMMMMMMMMMMMMMMMMK  Xd.      ");
-  script.Print("          .oKMMMMMMMMMMMMMKc  :.        ");
-  script.Print("             .:okKNWWWNKdl'  '          ");
-  script.Print("                 ''...`',  +'           ");
-  script.Print("                           carbonrom.org");
+  script.Print("Thanks for flash:");
+  script.Print("___ _____ ___ _    _____  __ ");
+  script.Print("/ __|_   _| __| |  |_ _\ \/ /");
+  script.Print("\__ \ | | | _|| |__ | | >  < ");
+  script.Print("|___/ |_| |___|____|___/_/\_\ ");
 
   if "selinux_fc" in OPTIONS.info_dict:
     WritePolicyConfig(OPTIONS.info_dict["selinux_fc"], output_zip)

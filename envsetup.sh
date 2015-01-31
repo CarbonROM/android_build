@@ -514,7 +514,7 @@ function brunch()
 {
     breakfast $*
     if [ $? -eq 0 ]; then
-        mka carbon
+        mka stelix
     else
         echo "No such item in brunch menu. Try 'breakfast'"
         return 1
@@ -529,7 +529,7 @@ function breakfast()
     CARBON_DEVICES_ONLY="true"
     unset LUNCH_MENU_CHOICES
     add_lunch_combo full-eng
-    for f in `/bin/ls vendor/carbon/vendorsetup.sh 2> /dev/null`
+    for f in `/bin/ls vendor/stelix/vendorsetup.sh 2> /dev/null`
         do
             echo "including $f"
             . $f
@@ -701,8 +701,8 @@ function tapas()
 function eat()
 {
     if [ "$OUT" ] ; then
-        MODVERSION=$(get_build_var CARBON_VERSION)
-        ZIPFILE=carbon-$MODVERSION.zip
+        MODVERSION=$(get_build_var STELIX_VERSION)
+        ZIPFILE=stelix-$MODVERSION.zip
         ZIPPATH=$OUT/$ZIPFILE
         if [ ! -f $ZIPPATH ] ; then
             echo "Nothing to eat"
@@ -2145,7 +2145,7 @@ unset f
 
 # Add completions
 check_bash_version && {
-    dirs="sdk/bash_completion vendor/carbon/bash_completion"
+    dirs="sdk/bash_completion vendor/stelix/bash_completion"
     for dir in $dirs; do
     if [ -d ${dir} ]; then
         for f in `/bin/ls ${dir}/[a-z]*.bash 2> /dev/null`; do
