@@ -602,11 +602,13 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
   script.Unmount("/data")
   script.AppendExtra("endif;")
 
-  script.Print("Thanks for flash:");
-  script.Print("___ _____ ___ _    _____  __ ");
-  script.Print("/ __|_   _| __| |  |_ _\ \/ /");
-  script.Print("\__ \ | | | _|| |__ | | >  < ");
-  script.Print("|___/ |_| |___|____|___/_/\_\ ");
+  script.Print("      _____________________________");
+  script.Print("             Thanks for flash:");
+  script.Print("       ___ _____ ___ _    _____  __");
+  script.Print("      / __|_   _| __| |  |_ _\ \/ /");
+  script.Print("      \__ \ | | | _|| |__ | | >  < ");
+  script.Print("      |___/ |_| |___|____|___/_/\_\ ");
+  script.Print("      _____________________________");
 
   if "selinux_fc" in OPTIONS.info_dict:
     WritePolicyConfig(OPTIONS.info_dict["selinux_fc"], output_zip)
