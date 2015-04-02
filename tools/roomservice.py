@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Copyright (C) 2012-2013, The CyanogenMod Project
-# Updated by CarbonROM 2014
+# Updated by STELIX CarbonROM 2015
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -176,11 +176,9 @@ def add_to_manifest(repositories, fallback_branch = None):
         if exists_in_tree(lm, repo_name):
             print('CarbonROM/%s already exists' % (repo_name))
             continue
-
         print('Adding dependency: CarbonROM/%s -> %s' % (repo_name, repo_target))
         project = ElementTree.Element("project", attrib = { "path": repo_target,
             "remote": "carbon", "name": "CarbonROM/%s" % repo_name })
-
         if 'branch' in repository:
             project.set('revision',repository['branch'])
         elif fallback_branch:
@@ -249,7 +247,8 @@ else:
 
             manufacturer = repo_name.replace("android_device_", "").replace("_" + device, "")
 
-            default_revision = "lollipop"
+            default_revision = get_default_revision()
+
             print("Default revision: %s" % default_revision)
             print("Checking branch info")
             githubreq = urllib.request.Request(repository['branches_url'].replace('{/branch}', ''))

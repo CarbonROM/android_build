@@ -20,6 +20,7 @@ Invoke ". build/envsetup.sh" from your shell to add the following functions to y
 - sgrep:   Greps on all local source files.
 - godir:   Go to the directory containing a file.
 - crremote: Add git remote for CarbonROM Gerrit Review.
+- crgerrit: A Git wrapper that fetches/pushes patch from/to CM Gerrit Review
 - crrebase: Rebase a Gerrit change and push it again.
 - aospremote: Add git remote for matching AOSP repository
 - cafremote: Add git remote for matching CodeAurora repository.
@@ -82,7 +83,6 @@ function check_product()
        CARBON_BUILD=
     fi
     export CARBON_BUILD
-
         TARGET_PRODUCT=$1 \
         TARGET_BUILD_VARIANT= \
         TARGET_BUILD_TYPE= \
@@ -662,7 +662,8 @@ function tapas()
 {
     local arch="$(echo $* | xargs -n 1 echo | \grep -E '^(arm|x86|mips|armv5|arm64|x86_64|mips64)$' | xargs)"
     local variant="$(echo $* | xargs -n 1 echo | \grep -E '^(user|userdebug|eng)$' | xargs)"
-    local apps="$(echo $* | xargs -n 1 echo | \grep -E -v '^(user|userdebug|eng|arm|x86|mips|armv5|arm64|x86_64|mips64)$' | xargs)"
+    local density="$(echo $* | xargs -n 1 echo | \grep -E '^(ldpi|mdpi|tvdpi|hdpi|xhdpi|xxhdpi|xxxhdpi|alldpi)$' | xargs)"
+    local apps="$(echo $* | xargs -n 1 echo | \grep -E -v '^(user|userdebug|eng|arm|x86|mips|armv5|arm64|x86_64|mips64|ldpi|mdpi|tvdpi|hdpi|xhdpi|xxhdpi|xxxhdpi|alldpi)$' | xargs)"
 
     if [ $(echo $arch | wc -w) -gt 1 ]; then
         echo "tapas: Error: Multiple build archs supplied: $arch"
@@ -670,6 +671,10 @@ function tapas()
     fi
     if [ $(echo $variant | wc -w) -gt 1 ]; then
         echo "tapas: Error: Multiple build variants supplied: $variant"
+        return
+    fi
+    if [ $(echo $density | wc -w) -gt 1 ]; then
+        echo "tapas: Error: Multiple densities supplied: $density"
         return
     fi
 
@@ -688,9 +693,13 @@ function tapas()
     if [ -z "$apps" ]; then
         apps=all
     fi
+    if [ -z "$density" ]; then
+        density=alldpi
+    fi
 
     export TARGET_PRODUCT=$product
     export TARGET_BUILD_VARIANT=$variant
+    export TARGET_BUILD_DENSITY=$density
     export TARGET_BUILD_TYPE=release
     export TARGET_BUILD_APPS=$apps
 
@@ -1036,6 +1045,85 @@ function pid()
     fi
 }
 
+# coredump_setup - enable core dumps globally for any process
+#                  that has the core-file-size limit set correctly
+#
+# NOTE: You must call also coredump_enable for a specific process
+#       if its core-file-size limit is not set already.
+# NOTE: Core dumps are written to ramdisk; they will not survive a reboot!
+
+function coredump_setup()
+{
+	echo "Getting root...";
+	adb root;
+	adb wait-for-device;
+
+	echo "Remounting root parition read-write...";
+	adb shell mount -w -o remount -t rootfs rootfs;
+	sleep 1;
+	adb wait-for-device;
+	adb shell mkdir -p /cores;
+	adb shell mount -t tmpfs tmpfs /cores;
+	adb shell chmod 0777 /cores;
+
+	echo "Granting SELinux permission to dump in /cores...";
+	adb shell restorecon -R /cores;
+
+	echo "Set core pattern.";
+	adb shell 'echo /cores/core.%p > /proc/sys/kernel/core_pattern';
+
+	echo "Done."
+}
+
+# coredump_enable - enable core dumps for the specified process
+# $1 = PID of process (e.g., $(pid mediaserver))
+#
+# NOTE: coredump_setup must have been called as well for a core
+#       dump to actually be generated.
+
+function coredump_enable()
+{
+	local PID=$1;
+	if [ -z "$PID" ]; then
+		printf "Expecting a PID!\n";
+		return;
+	fi;
+	echo "Setting core limit for $PID to infinite...";
+	adb shell prlimit $PID 4 -1 -1
+}
+
+# core - send SIGV and pull the core for process
+# $1 = PID of process (e.g., $(pid mediaserver))
+#
+# NOTE: coredump_setup must be called once per boot for core dumps to be
+#       enabled globally.
+
+function core()
+{
+	local PID=$1;
+
+	if [ -z "$PID" ]; then
+		printf "Expecting a PID!\n";
+		return;
+	fi;
+
+	local CORENAME=core.$PID;
+	local COREPATH=/cores/$CORENAME;
+	local SIG=SEGV;
+
+	coredump_enable $1;
+
+	local done=0;
+	while [ $(adb shell "[ -d /proc/$PID ] && echo -n yes") ]; do
+		printf "\tSending SIG%s to %d...\n" $SIG $PID;
+		adb shell kill -$SIG $PID;
+		sleep 1;
+	done;
+
+	adb shell "while [ ! -f $COREPATH ] ; do echo waiting for $COREPATH to be generated; sleep 1; done"
+	echo "Done: core is under $COREPATH on device.";
+}
+
 # systemstack - dump the current stack trace of all threads in the system process
 # to the usual ANR traces file
 function systemstack()
@@ -1119,10 +1207,151 @@ function is64bit()
     fi
 }
 
+function adb_get_product_device() {
+  echo `adb shell getprop ro.product.device | sed s/.$//`
+}
+
+# returns 0 when process is not traced
+function adb_get_traced_by() {
+  echo `adb shell cat /proc/$1/status | grep -e "^TracerPid:" | sed "s/^TracerPid:\t//" | sed s/.$//`
+}
+
+function gdbclient() {
+  # TODO:
+  # 1. Check for ANDROID_SERIAL/multiple devices
+  local PROCESS_NAME="n/a"
+  local PID=$1
+  local PORT=5039
+  if [ -z "$PID" ]; then
+    echo "Usage: gdbclient <pid|processname> [port number]"
+    return -1
+  fi
+  local DEVICE=$(adb_get_product_device)
+
+  if [ -z "$DEVICE" ]; then
+    echo "Error: Unable to get device name. Please check if device is connected and ANDROID_SERIAL is set."
+    return -2
+  fi
+
+  if [ -n "$2" ]; then
+    PORT=$2
+  fi
+
+  local ROOT=$(gettop)
+  if [ -z "$ROOT" ]; then
+    # This is for the situation with downloaded symbols (from the build server)
+    # we check if they are available.
+    ROOT=`realpath .`
+  fi
+
+  local OUT_ROOT="$ROOT/out/target/product/$DEVICE"
+  local SYMBOLS_DIR="$OUT_ROOT/symbols"
+
+  if [ ! -d $SYMBOLS_DIR ]; then
+    echo "Error: couldn't find symbols: $SYMBOLS_DIR does not exist or is not a directory."
+    return -3
+  fi
+
+  # let's figure out which executable we are about to debug
+
+  # check if user specified a name -> resolve to pid
+  if [[ ! "$PID" =~ ^[0-9]+$ ]] ; then
+    PROCESS_NAME=$PID
+    PID=$(pid --exact $PROCESS_NAME)
+    if [ -z "$PID" ]; then
+      echo "Error: couldn't resolve pid by process name: $PROCESS_NAME"
+      return -4
+    fi
+  fi
+
+  local EXE=`adb shell readlink /proc/$PID/exe | sed s/.$//`
+  # TODO: print error in case there is no such pid
+  local LOCAL_EXE_PATH=$SYMBOLS_DIR$EXE
+
+  if [ ! -f $LOCAL_EXE_PATH ]; then
+    echo "Error: unable to find symbols for executable $EXE: file $LOCAL_EXE_PATH does not exist"
+    return -5
+  fi
+
+  local USE64BIT=""
+
+  if [[ "$(file $LOCAL_EXE_PATH)" =~ 64-bit ]]; then
+    USE64BIT="64"
+  fi
+
+  local GDB=
+  local GDB64=
+  local CPU_ABI=`adb shell getprop ro.product.cpu.abilist | sed s/.$//`
+  # TODO: we assume these are available via $PATH
+  if [[ $CPU_ABI =~ (^|,)arm64 ]]; then
+    GDB=arm-linux-androideabi-gdb
+    GDB64=aarch64-linux-android-gdb
+  elif [[ $CPU_ABI =~ (^|,)arm ]]; then
+    GDB=arm-linux-androideabi-gdb
+  elif [[ $CPU_ABI =~ (^|,)x86_64 ]]; then
+    GDB=x86_64-linux-androideabi-gdb
+  elif [[ $CPU_ABI =~ (^|,)x86 ]]; then
+    GDB=x86_64-linux-androideabi-gdb
+  elif [[ $CPU_ABI =~ (^|,)mips64 ]]; then
+    GDB=mipsel-linux-android-gdb
+    GDB64=mips64el-linux-android-gdb
+  elif [[ $CPU_ABI =~ (^|,)mips ]]; then
+    GDB=mipsel-linux-android-gdb
+  else
+    echo "Error: unrecognized cpu.abilist: $CPU_ABI"
+    return -6
+  fi
+
+  # TODO: check if tracing process is gdbserver and not some random strace...
+  if [ $(adb_get_traced_by $PID) -eq 0 ]; then
+    # start gdbserver
+    echo "Starting gdbserver..."
+    # TODO: check if adb is already listening $PORT
+    # to avoid unnecessary calls
+    echo ". adb forward for port=$PORT..."
+    adb forward tcp:$PORT tcp:$PORT
+    echo ". starting gdbserver to attach to pid=$PID..."
+    adb shell gdbserver$USE64BIT :$PORT --attach $PID &
+    echo ". give it couple of seconds to start..."
+    sleep 2
+    echo ". done"
+  else
+    echo "It looks like gdbserver is already attached to $PID (process is traced), trying to connect to it using local port=$PORT"
+  fi
+
+  local OUT_SO_SYMBOLS=$SYMBOLS_DIR/system/lib$USE64BIT
+  local OUT_VENDOR_SO_SYMBOLS=$SYMBOLS_DIR/vendor/lib$USE64BIT
+  local ART_CMD=""
+
+  echo >|"$OUT_ROOT/gdbclient.cmds" "set solib-absolute-prefix $SYMBOLS_DIR"
+  echo >>"$OUT_ROOT/gdbclient.cmds" "set solib-search-path $OUT_SO_SYMBOLS:$OUT_SO_SYMBOLS/hw:$OUT_SO_SYMBOLS/ssl/engines:$OUT_SO_SYMBOLS/drm:$OUT_SO_SYMBOLS/egl:$OUT_SO_SYMBOLS/soundfx:$OUT_VENDOR_SO_SYMBOLS:$OUT_VENDOR_SO_SYMBOLS/hw:$OUT_VENDOR_SO_SYMBOLS/egl"
+  local DALVIK_GDB_SCRIPT=$ROOT/development/scripts/gdb/dalvik.gdb
+  if [ -f $DALVIK_GDB_SCRIPT ]; then
+    echo >>"$OUT_ROOT/gdbclient.cmds" "source $DALVIK_GDB_SCRIPT"
+    ART_CMD="art-on"
+  else
+    echo "Warning: couldn't find $DALVIK_GDB_SCRIPT - ART debugging options will not be available"
+  fi
+  echo >>"$OUT_ROOT/gdbclient.cmds" "target remote :$PORT"
+  if [[ $EXE =~ (^|/)(app_process|dalvikvm)(|32|64)$ ]]; then
+    echo >> "$OUT_ROOT/gdbclient.cmds" $ART_CMD
+  fi
+
+  echo >>"$OUT_ROOT/gdbclient.cmds" ""
+
+  local WHICH_GDB=$GDB
+
+  if [ -n "$USE64BIT" -a -n "$GDB64" ]; then
+    WHICH_GDB=$GDB64
+  fi
+
+  gdbwrapper $WHICH_GDB "$OUT_ROOT/gdbclient.cmds" "$LOCAL_EXE_PATH"
+}
+
 # gdbclient now determines whether the user wants to debug a 32-bit or 64-bit
 # executable, set up the approriate gdbserver, then invokes the proper host
 # gdb.
-function gdbclient()
+function gdbclient_old()
 {
    local OUT_ROOT=$(get_abs_build_var PRODUCT_OUT)
    local OUT_SYMBOLS=$(get_abs_build_var TARGET_OUT_UNSTRIPPED)
@@ -1834,6 +2063,252 @@ function installrecovery()
     fi
 }
 
+function makerecipe() {
+  if [ -z "$1" ]
+  then
+    echo "No branch name provided."
+    return 1
+  fi
+  cd android
+  sed -i s/'default revision=.*'/'default revision="refs\/heads\/'$1'"'/ default.xml
+  git commit -a -m "$1"
+  cd ..
+
+  repo forall -c '
+
+  if [ "$REPO_REMOTE" == "github" ]
+  then
+    pwd
+    cmremote
+    git push cmremote HEAD:refs/heads/'$1'
+  fi
+  '
+}
+
+function crgerrit() {
+    if [ $# -eq 0 ]; then
+        $FUNCNAME help
+        return 1
+    fi
+    local user=`git config --get review.review.carbonrom.org.username`
+    local review=`git config --get remote.github.review`
+    local project=`git config --get remote.github.projectname`
+    local command=$1
+    shift
+    case $command in
+        help)
+            if [ $# -eq 0 ]; then
+                cat <<EOF
+Usage:
+    $FUNCNAME COMMAND [OPTIONS] [CHANGE-ID[/PATCH-SET]][{@|^|~|:}ARG] [-- ARGS]
+Commands:
+    fetch   Just fetch the change as FETCH_HEAD
+    help    Show this help, or for a specific command
+    pull    Pull a change into current branch
+    push    Push HEAD or a local branch to Gerrit for a specific branch
+Any other Git commands that support refname would work as:
+    git fetch URL CHANGE && git COMMAND OPTIONS FETCH_HEAD{@|^|~|:}ARG -- ARGS
+See '$FUNCNAME help COMMAND' for more information on a specific command.
+Example:
+    $FUNCNAME checkout -b topic 1234/5
+works as:
+    git fetch http://DOMAIN/p/PROJECT refs/changes/34/1234/5 \\
+      && git checkout -b topic FETCH_HEAD
+will checkout a new branch 'topic' base on patch-set 5 of change 1234.
+Patch-set 1 will be fetched if omitted.
+EOF
+                return
+            fi
+            case $1 in
+                __cmg_*) echo "For internal use only." ;;
+                changes|for)
+                    if [ "$FUNCNAME" = "crgerrit" ]; then
+                        echo "'$FUNCNAME $1' is deprecated."
+                    fi
+                    ;;
+                help) $FUNCNAME help ;;
+                fetch|pull) cat <<EOF
+usage: $FUNCNAME $1 [OPTIONS] CHANGE-ID[/PATCH-SET]
+works as:
+    git $1 OPTIONS http://DOMAIN/p/PROJECT \\
+      refs/changes/HASH/CHANGE-ID/{PATCH-SET|1}
+Example:
+    $FUNCNAME $1 1234
+will $1 patch-set 1 of change 1234
+EOF
+                    ;;
+                push) cat <<EOF
+usage: $FUNCNAME push [OPTIONS] [LOCAL_BRANCH:]REMOTE_BRANCH
+works as:
+    git push OPTIONS ssh://USER@DOMAIN:29418/PROJECT \\
+      {LOCAL_BRANCH|HEAD}:refs/for/REMOTE_BRANCH
+Example:
+    $FUNCNAME push fix6789:gingerbread
+will push local branch 'fix6789' to Gerrit for branch 'gingerbread'.
+HEAD will be pushed from local if omitted.
+EOF
+                    ;;
+                *)
+                    $FUNCNAME __cmg_err_not_supported $1 && return
+                    cat <<EOF
+usage: $FUNCNAME $1 [OPTIONS] CHANGE-ID[/PATCH-SET][{@|^|~|:}ARG] [-- ARGS]
+works as:
+    git fetch http://DOMAIN/p/PROJECT \\
+      refs/changes/HASH/CHANGE-ID/{PATCH-SET|1} \\
+      && git $1 OPTIONS FETCH_HEAD{@|^|~|:}ARG -- ARGS
+EOF
+                    ;;
+            esac
+            ;;
+        __cmg_get_ref)
+            $FUNCNAME __cmg_err_no_arg $command $# && return 1
+            local change_id patchset_id hash
+            case $1 in
+                */*)
+                    change_id=${1%%/*}
+                    patchset_id=${1#*/}
+                    ;;
+                *)
+                    change_id=$1
+                    patchset_id=1
+                    ;;
+            esac
+            hash=$(($change_id % 100))
+            case $hash in
+                [0-9]) hash="0$hash" ;;
+            esac
+            echo "refs/changes/$hash/$change_id/$patchset_id"
+            ;;
+        fetch|pull)
+            $FUNCNAME __cmg_err_no_arg $command $# help && return 1
+            $FUNCNAME __cmg_err_not_repo && return 1
+            local change=$1
+            shift
+            git $command $@ http://$review/p/$project \
+                $($FUNCNAME __cmg_get_ref $change) || return 1
+            ;;
+        push)
+            $FUNCNAME __cmg_err_no_arg $command $# help && return 1
+            $FUNCNAME __cmg_err_not_repo && return 1
+            if [ -z "$user" ]; then
+                echo >&2 "Gerrit username not found."
+                return 1
+            fi
+            local local_branch remote_branch
+            case $1 in
+                *:*)
+                    local_branch=${1%:*}
+                    remote_branch=${1##*:}
+                    ;;
+                *)
+                    local_branch=HEAD
+                    remote_branch=$1
+                    ;;
+            esac
+            shift
+            git push $@ ssh://$user@$review:29418/$project \
+                $local_branch:refs/for/$remote_branch || return 1
+            ;;
+        changes|for)
+            if [ "$FUNCNAME" = "crgerrit" ]; then
+                echo >&2 "'$FUNCNAME $command' is deprecated."
+            fi
+            ;;
+        __cmg_err_no_arg)
+            if [ $# -lt 2 ]; then
+                echo >&2 "'$FUNCNAME $command' missing argument."
+            elif [ $2 -eq 0 ]; then
+                if [ -n "$3" ]; then
+                    $FUNCNAME help $1
+                else
+                    echo >&2 "'$FUNCNAME $1' missing argument."
+                fi
+            else
+                return 1
+            fi
+            ;;
+        __cmg_err_not_repo)
+            if [ -z "$review" -o -z "$project" ]; then
+                echo >&2 "Not currently in any reviewable repository."
+            else
+                return 1
+            fi
+            ;;
+        __cmg_err_not_supported)
+            $FUNCNAME __cmg_err_no_arg $command $# && return
+            case $1 in
+                #TODO: filter more git commands that don't use refname
+                init|add|rm|mv|status|clone|remote|bisect|config|stash)
+                    echo >&2 "'$FUNCNAME $1' is not supported."
+                    ;;
+                *) return 1 ;;
+            esac
+            ;;
+    #TODO: other special cases?
+        *)
+            $FUNCNAME __cmg_err_not_supported $command && return 1
+            $FUNCNAME __cmg_err_no_arg $command $# help && return 1
+            $FUNCNAME __cmg_err_not_repo && return 1
+            local args="$@"
+            local change pre_args refs_arg post_args
+            case "$args" in
+                *--\ *)
+                    pre_args=${args%%-- *}
+                    post_args="-- ${args#*-- }"
+                    ;;
+                *) pre_args="$args" ;;
+            esac
+            args=($pre_args)
+            pre_args=
+            if [ ${#args[@]} -gt 0 ]; then
+                change=${args[${#args[@]}-1]}
+            fi
+            if [ ${#args[@]} -gt 1 ]; then
+                pre_args=${args[0]}
+                for ((i=1; i<${#args[@]}-1; i++)); do
+                    pre_args="$pre_args ${args[$i]}"
+                done
+            fi
+            while ((1)); do
+                case $change in
+                    ""|--)
+                        $FUNCNAME help $command
+                        return 1
+                        ;;
+                    *@*)
+                        if [ -z "$refs_arg" ]; then
+                            refs_arg="@${change#*@}"
+                            change=${change%%@*}
+                        fi
+                        ;;
+                    *~*)
+                        if [ -z "$refs_arg" ]; then
+                            refs_arg="~${change#*~}"
+                            change=${change%%~*}
+                        fi
+                        ;;
+                    *^*)
+                        if [ -z "$refs_arg" ]; then
+                            refs_arg="^${change#*^}"
+                            change=${change%%^*}
+                        fi
+                        ;;
+                    *:*)
+                        if [ -z "$refs_arg" ]; then
+                            refs_arg=":${change#*:}"
+                            change=${change%%:*}
+                        fi
+                        ;;
+                    *) break ;;
+                esac
+            done
+            $FUNCNAME fetch $change \
+                && git $command $pre_args FETCH_HEAD$refs_arg $post_args \
+                || return 1
+            ;;
+    esac
+}
+
 function mka() {
     case `uname -s` in
         Darwin)
@@ -2011,6 +2486,7 @@ EOF
 alias mmp='dopush mm'
 alias mmmp='dopush mmm'
 alias mkap='dopush mka'
+alias cmkap='dopush cmka'
 
 function repopick() {
     T=$(gettop)

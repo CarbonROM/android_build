@@ -4,8 +4,8 @@
 # Release name
 PRODUCT_RELEASE_NAME := __DEVICE__
 
-# Inherit some common CM stuff.
-$(call inherit-product, vendor/carbon/config/common_phone.mk)
+# Inherit some common Carbon stuff.
+$(call inherit-product, vendor/stelix/config/common_phone.mk)
 
 # Inherit device configuration
 $(call inherit-product, device/__MANUFACTURER__/__DEVICE__/device___DEVICE__.mk)
