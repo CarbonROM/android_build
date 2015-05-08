@@ -1693,27 +1693,22 @@ $(INTERNAL_OTA_PACKAGE_TARGET): $(BUILT_TARGET_FILES_PACKAGE) $(DISTTOOLS)
 	   $(if $(OEM_OTA_CONFIG), -o $(OEM_OTA_CONFIG)) \
 	   $(BUILT_TARGET_FILES_PACKAGE) $@
 
-CARBON_TARGET_PACKAGE := $(PRODUCT_OUT)/$(STELIX_VERSION)-$(TARGET_DEVICE).zip
+CARBON_TARGET_PACKAGE := $(PRODUCT_OUT)/$(CARBON_VERSION)-$(TARGET_DEVICE).zip
 
-.PHONY: otapackage stelix
+.PHONY: otapackage carbon
 otapackage: $(INTERNAL_OTA_PACKAGE_TARGET)
-stelix: otapackage
+carbon: otapackage
 	$(hide) ln -f $(INTERNAL_OTA_PACKAGE_TARGET) $(CARBON_TARGET_PACKAGE)
 	$(hide) $(MD5SUM) $(CARBON_TARGET_PACKAGE) > $(CARBON_TARGET_PACKAGE).md5sum
 	@echo ""
-
-
-
-
-
-
 	@echo -e ${CL_YLW}"════════════════════════════════════════════════════════════════════════════════"${CL_RST}
-	@echo -e ${CL_BLU}"                ███████╗████████╗███████╗██╗     ██╗██╗  ██╗"${CL_RST}
-	@echo -e ${CL_BLU}"                ██╔════╝╚══██╔══╝██╔════╝██║     ██║╚██╗██╔╝"${CL_RST}
-	@echo -e ${CL_BLU}"                ███████╗   ██║   █████╗  ██║     ██║ ╚███╔╝"${CL_RST}
-	@echo -e ${CL_BLU}"                ╚════██║   ██║   ██╔══╝  ██║     ██║ ██╔██╗"${CL_RST}
-	@echo -e ${CL_BLU}"                ███████║   ██║   ███████╗███████╗██║██╔╝ ██╗"${CL_RST}
-	@echo -e ${CL_BLU}"                ╚══════╝   ╚═╝   ╚══════╝╚══════╝╚═╝╚═╝  ╚═╝"${CL_RST}
+	@echo -e ${CL_BLU}" ██████╗ █████╗ ██████╗ ██████╗  ██████╗ ███╗   ██╗ ██████╗  ██████╗ ███╗   ███╗"${CL_RST}
+	@echo -e ${CL_BLU}"██╔════╝██╔══██╗██╔══██╗██╔══██╗██╔═══██╗████╗  ██║ ██╔══██╗██╔═══██╗████╗ ████║"${CL_RST}
+	@echo -e ${CL_BLU}"██║     ███████║██████╔╝██████╔╝██║   ██║██╔██╗ ██║ ██████╔╝██║   ██║██╔████╔██║"${CL_RST}
+	@echo -e ${CL_BLU}"██║     ██╔══██║██╔══██╗██╔══██╗██║   ██║██║╚██╗██║ ██╔══██╗██║   ██║██║╚██╔╝██║"${CL_RST}
+	@echo -e ${CL_BLU}"╚██████╗██║  ██║██║  ██║██████╔╝╚██████╔╝██║ ╚████║ ██║  ██║╚██████╔╝██║ ╚═╝ ██║"${CL_RST}
+	@echo -e ${CL_BLU}" ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝  ╚═════╝ ╚═╝  ╚═══╝ ╚═╝  ╚═╝ ╚═════╝ ╚═╝     ╚═╝"${CL_RST}
+	@echo -e ${CL_RED}"carbonrom.org"${CL_RST}
 	@echo -e ${CL_YLW}"════════════════════════════════════════════════════════════════════════════════"${CL_RST}
 	@echo -e ${CL_CYN}"Package zip: "${CL_MAG} $(CARBON_TARGET_PACKAGE)${CL_RST}
 	@echo -e ${CL_CYN}"Package md5: "${CL_MAG}" `cat $(CARBON_TARGET_PACKAGE).md5sum | cut -d ' ' -f 1`"${CL_RST}
