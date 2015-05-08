@@ -39,11 +39,11 @@ default_rem = "gh"
 default_rev = "lp5.1"
 # set this to the remote that you use for projects from your team repos
 # example fetch="https://github.com/omnirom"
-default_team_rem = "ste"
+default_team_rem = "carbon"
 # this shouldn't change unless google makes changes
 local_manifest_dir = ".repo/local_manifests"
 # change this to your name on github (or equivalent hosting)
-android_team = "STELIX-Lollipop"
+android_team = "CarbonROM"
 
 
 def check_repo_exists(git_data):
