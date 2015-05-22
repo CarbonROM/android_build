@@ -181,7 +181,7 @@ include $(BUILD_SYSTEM)/device.mk
 
 # A CARBON build needs only the CARBON product makefiles.
   ifneq ($(CARBON_BUILD),)
-    all_product_configs := $(shell ls device/*/$(CARBON_BUILD)/carbon.mk)
+    all_product_configs := $(shell find device -path "*/$(CARBON_BUILD)/carbon.mk")
 else
   ifneq ($(strip $(TARGET_BUILD_APPS)),)
   # An unbundled app build needs only the core product makefiles.
