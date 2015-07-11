@@ -49,30 +49,10 @@ $(combo_var_prefix)HAVE_STRLCPY := 0
 $(combo_var_prefix)HAVE_STRLCAT := 0
 $(combo_var_prefix)HAVE_KERNEL_MODULES := 0
 
-ifneq ($(GLOBAL_CFLAGS_CUSTOM),)
-$(combo_var_prefix)GLOBAL_CFLAGS := $(GLOBAL_CFLAGS_CUSTOM)
-else
 $(combo_var_prefix)GLOBAL_CFLAGS := -fno-exceptions -Wno-multichar
-endif
-
-ifneq ($(RELEASE_CFLAGS_CUSTOM),)
-$(combo_var_prefix)RELEASE_CFLAGS := $(RELEASE_CFLAGS_CUSTOM)
-else
 $(combo_var_prefix)RELEASE_CFLAGS := -O2 -g -fno-strict-aliasing
-endif
-
-ifneq ($(GLOBAL_CPPFLAGS_CUSTOM),)
-$(combo_var_prefix)GLOBAL_CPPFLAGS := $(GLOBAL_CPPFLAGS_CUSTOM)
-else
 $(combo_var_prefix)GLOBAL_CPPFLAGS :=
-endif
-
-ifneq ($(GLOBAL_LDFLAGS_CUSTOM),)
-$(combo_var_prefix)GLOBAL_LDFLAGS := $(GLOBAL_LDFLAGS_CUSTOM)
-else
 $(combo_var_prefix)GLOBAL_LDFLAGS :=
-endif
-
 $(combo_var_prefix)GLOBAL_ARFLAGS := crsPD
 $(combo_var_prefix)GLOBAL_LD_DIRS :=
 

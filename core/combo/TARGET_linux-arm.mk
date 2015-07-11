@@ -67,24 +67,16 @@ $(combo_2nd_arch_prefix)TARGET_STRIP := $($(combo_2nd_arch_prefix)TARGET_TOOLS_P
 
 $(combo_2nd_arch_prefix)TARGET_NO_UNDEFINED_LDFLAGS := -Wl,--no-undefined
 
-ifneq ($(TARGET_arm_CFLAGS_CUSTOM),)
-$(combo_2nd_arch_prefix)TARGET_arm_CFLAGS := $(TARGET_arm_CFLAGS_CUSTOM)
-else
 $(combo_2nd_arch_prefix)TARGET_arm_CFLAGS :=    -O2 \
                         -fomit-frame-pointer \
                         -fstrict-aliasing    \
                         -funswitch-loops
-endif
 
-ifneq ($(TARGET_thumb_CFLAGS_CUSTOM),)
-$(combo_2nd_arch_prefix)TARGET_thumb_CFLAGS := $(TARGET_thumb_CFLAGS_CUSTOM)
-else
 # Modules can choose to compile some source as thumb.
 $(combo_2nd_arch_prefix)TARGET_thumb_CFLAGS :=  -mthumb \
                         -Os \
                         -fomit-frame-pointer \
                         -fno-strict-aliasing
-endif
 
 # Set FORCE_ARM_DEBUGGING to "true" in your buildspec.mk
 # or in your environment to force a full arm build, even for
@@ -151,9 +143,6 @@ $(combo_2nd_arch_prefix)TARGET_GLOBAL_CFLAGS += -mthumb-interwork
 $(combo_2nd_arch_prefix)TARGET_GLOBAL_CPPFLAGS += -fvisibility-inlines-hidden
 
 # More flags/options can be added here
-ifneq ($(TARGET_RELEASE_CFLAGS_CUSTOM),)
-$(combo_2nd_arch_prefix)TARGET_RELEASE_CFLAGS := $(TARGET_RELEASE_CFLAGS_CUSTOM)
-else
 $(combo_2nd_arch_prefix)TARGET_RELEASE_CFLAGS := \
 			-DNDEBUG \
 			-g \
@@ -161,14 +150,6 @@ $(combo_2nd_arch_prefix)TARGET_RELEASE_CFLAGS := \
 			-fgcse-after-reload \
 			-frerun-cse-after-loop \
 			-frename-registers
-endif
-
-ifneq ($(TARGET_GLOBAL_CPPFLAGS_ADD_CUSTOM),)
-$(combo_2nd_arch_prefix)TARGET_GLOBAL_CPPFLAGS += $(TARGET_GLOBAL_CPPFLAGS_ADD_CUSTOM)
-endif
-ifneq ($(TARGET_GLOBAL_CFLAGS_ADD_CUSTOM),)
-$(combo_2nd_arch_prefix)TARGET_GLOBAL_CFLAGS += $(TARGET_GLOBAL_CFLAGS_ADD_CUSTOM)
-endif
 
 libc_root := bionic/libc
 libm_root := bionic/libm
