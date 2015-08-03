@@ -22,6 +22,7 @@ Invoke ". build/envsetup.sh" from your shell to add the following functions to y
 - aospremote: Add git remote for matching AOSP repository
 - cafremote: Add git remote for matching CodeAurora repository.
 - cmremote: Add git remote for matching CM repository.
+- crremote: Add gerrit remote for matching Carbon repository.
 - mka:      Builds using SCHED_BATCH on all processors
 - mkap:     Builds the module(s) using mka and pushes them to the device.
 - cmka:     Cleans and builds using mka.
@@ -1925,6 +1926,30 @@ function cmremote()
     git remote add cm git@github.com:CyanogenMod/$PFX
     echo "Remote 'cm' created"
 }
+
+function crremote()
+{
+    git remote rm crremote 2> /dev/null
+    if [ ! -d .git ]
+    then
+        echo .git directory not found. Please run this from the root directory of the Android repository you wish to set up.
+    fi
+    GERRIT_REMOTE=$(cat .git/config  | grep git://github.com | awk '{ print $NF }' | sed s#git://github.com/##g)
+    if [ -z "$GERRIT_REMOTE" ]
+    then
+        echo Unable to set up the git remote, are you in the root of the repo?
+        return 0
+    fi
+    CRUSER=`git config --get review.review.carbonrom.org.username`
+    if [ -z "$CRUSER" ]
+    then
+        git remote add crremote ssh://review.carbonrom.org:29418/$GERRIT_REMOTE
+    else
+        git remote add crremote ssh://$CRUSER@review.carbonrom.org:29418/$GERRIT_REMOTE
+    fi
+    echo You can now push to "crremote".
+}
+
 
 function installboot()
 {
