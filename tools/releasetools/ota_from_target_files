@@ -630,7 +630,7 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
   script.Print("          .oKMMMMMMMMMMMMMKc  :.        ");
   script.Print("             .:okKNWWWNKdl'  '          ");
   script.Print("                 ''...`',  +'           ");
-  script.Print("                              CarbonTEAM");
+  script.Print("                           carbonrom.org");
 
   if "selinux_fc" in OPTIONS.info_dict:
     WritePolicyConfig(OPTIONS.info_dict["selinux_fc"], output_zip)
