@@ -43,7 +43,7 @@ default_team_rem = "carbon"
 # this shouldn't change unless google makes changes
 local_manifest_dir = ".repo/local_manifests"
 # change this to your name on github (or equivalent hosting)
-android_team = "CarbonTEAM"
+android_team = "CarbonROM"
 
 
 def check_repo_exists(git_data):
