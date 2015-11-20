@@ -125,7 +125,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description=textwrap.dedent('''\
         repopick.py is a utility to simplify the process of cherry picking
-        patches from CyanogenMod's Gerrit instance (or any gerrit instance of your choosing)
+        patches from CarbonROM's Gerrit instance (or any gerrit instance of your choosing)
         Given a list of change numbers, repopick will cd into the project path
         and cherry pick the latest patch available.
         With the --start-branch argument, the user can specify that a branch
@@ -202,7 +202,7 @@ if __name__ == '__main__':
     manifest = subprocess.check_output(['repo', 'manifest'])
     xml_root = ElementTree.fromstring(manifest)
     projects = xml_root.findall('project')
-    default_revision = xml_root.findall('default')[0].get('revision').split('/')[-1]
+    default_revision = xml_root.findall('.//*[@name="carbongerrit"]')[0].get('revision').split('/')[-1]
 
     #dump project data into the a list of dicts with the following data:
     #{project: {path, revision}}
@@ -304,9 +304,9 @@ if __name__ == '__main__':
                 print('Trying to fetch the change from GitHub')
 
             if args.pull:
-                cmd = ['git pull --no-edit github', item['fetch'][method]['ref']]
+                cmd = ['git pull --no-edit carbongerrit', item['fetch'][method]['ref']]
             else:
-                cmd = ['git fetch github', item['fetch'][method]['ref']]
+                cmd = ['git fetch carbongerrit', item['fetch'][method]['ref']]
             if args.quiet:
                 cmd.append('--quiet')
             else:
