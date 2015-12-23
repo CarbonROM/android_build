@@ -1587,9 +1587,9 @@ ifndef CARBON_BUILDTYPE
 endif
 
 ifeq ($(CARBON_BUILDTYPE), RELEASE)
-  CARBON_VERSION := $(CARBON_CODENAME)-$(TARGET_PRODUCT)-$(shell date -u +%Y%m%d)-$(shell date -u +%H%M)
+  CARBON_VERSION := $(CARBON_CODENAME)-$(TARGET_DEVICE)-$(shell date -u +%Y%m%d)-$(shell date -u +%H%M)
 else
-  CARBON_VERSION := $(CARBON_CODENAME)-$(CARBON_BUILDTYPE)-$(TARGET_PRODUCT)-$(shell date -u +%Y%m%d)-$(shell date -u +%H%M)
+  CARBON_VERSION := $(CARBON_CODENAME)-$(CARBON_BUILDTYPE)-$(TARGET_DEVICE)-$(shell date -u +%Y%m%d)-$(shell date -u +%H%M)
 endif
 
 CARBON_TARGET_PACKAGE := $(PRODUCT_OUT)/CARBON-$(CARBON_VERSION).zip
@@ -1599,7 +1599,20 @@ otapackage: $(INTERNAL_OTA_PACKAGE_TARGET)
 carbon: otapackage
 	$(hide) ln -f $(INTERNAL_OTA_PACKAGE_TARGET) $(CARBON_TARGET_PACKAGE)
 	$(hide) $(MD5SUM) $(CARBON_TARGET_PACKAGE) > $(CARBON_TARGET_PACKAGE).md5sum
-	@echo -e ${CL_CYN}"Package Complete: $(CARBON_TARGET_PACKAGE)"${CL_RST}
+	@echo ""
+	@echo -e ${CL_YLW}"════════════════════════════════════════════════════════════════════════════════"${CL_RST}
+	@echo -e ${CL_BLU}" ██████╗ █████╗ ██████╗ ██████╗  ██████╗ ███╗   ██╗ ██████╗  ██████╗ ███╗   ███╗"${CL_RST}
+	@echo -e ${CL_BLU}"██╔════╝██╔══██╗██╔══██╗██╔══██╗██╔═══██╗████╗  ██║ ██╔══██╗██╔═══██╗████╗ ████║"${CL_RST}
+	@echo -e ${CL_BLU}"██║     ███████║██████╔╝██████╔╝██║   ██║██╔██╗ ██║ ██████╔╝██║   ██║██╔████╔██║"${CL_RST}
+	@echo -e ${CL_BLU}"██║     ██╔══██║██╔══██╗██╔══██╗██║   ██║██║╚██╗██║ ██╔══██╗██║   ██║██║╚██╔╝██║"${CL_RST}
+	@echo -e ${CL_BLU}"╚██████╗██║  ██║██║  ██║██████╔╝╚██████╔╝██║ ╚████║ ██║  ██║╚██████╔╝██║ ╚═╝ ██║"${CL_RST}
+	@echo -e ${CL_BLU}" ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝  ╚═════╝ ╚═╝  ╚═══╝ ╚═╝  ╚═╝ ╚═════╝ ╚═╝     ╚═╝"${CL_RST}
+	@echo -e ${CL_RED}"                                   carbonrom.org                                "${CL_RST}
+	@echo -e ${CL_YLW}"════════════════════════════════════════════════════════════════════════════════"${CL_RST}
+	@echo -e ${CL_CYN}"Package zip: "${CL_MAG} $(CARBON_TARGET_PACKAGE)                                 ${CL_RST}
+	@echo -e ${CL_CYN}"Package md5: "${CL_MAG}" `cat $(CARBON_TARGET_PACKAGE).md5sum | cut -d ' ' -f 1`"${CL_RST}
+	@echo -e ${CL_CYN}"Package size:"${CL_MAG}" `ls -lah $(CARBON_TARGET_PACKAGE) | cut -d ' ' -f 5`   "${CL_RST}
+	@echo -e ${CL_YLW}"════════════════════════════════════════════════════════════════════════════════"${CL_RST}
 
 endif    # recovery_fstab is defined
 endif    # TARGET_NO_KERNEL != true
