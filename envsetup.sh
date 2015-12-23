@@ -385,7 +385,7 @@ function addcompletions()
         return
     fi
 
-    dir="sdk/bash_completion"
+    dir="sdk/bash_completion vendor/carbon/bash_completion"
     if [ -d ${dir} ]; then
         for f in `/bin/ls ${dir}/[a-z]*.bash 2> /dev/null`; do
             echo "including $f"
