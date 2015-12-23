@@ -1526,10 +1526,10 @@ function get_make_command()
   echo command make
 }
 
-function make()
+function mk_timer()
 {
     local start_time=$(date +"%s")
-    $(get_make_command) "$@"
+    $@
     local ret=$?
     local end_time=$(date +"%s")
     local tdiff=$(($end_time-$start_time))
@@ -1540,7 +1540,7 @@ function make()
     if [ -n "$ncolors" ] && [ $ncolors -ge 8 ]; then
         color_failed="\e[0;31m"
         color_success="\e[0;32m"
-        color_reset="\e[00m"
+        color_reset="\e[0m"
     else
         color_failed=""
         color_success=""
@@ -1548,9 +1548,9 @@ function make()
     fi
     echo
     if [ $ret -eq 0 ] ; then
-        echo -n -e "${color_success}#### make completed successfully "
+        printf "${color_success}#### make completed successfully "
     else
-        echo -n -e "${color_failed}#### make failed to build some targets "
+        printf "${color_failed}#### make failed to build some targets "
     fi
     if [ $hours -gt 0 ] ; then
         printf "(%02g:%02g:%02g (hh:mm:ss))" $hours $mins $secs
@@ -1559,9 +1559,13 @@ function make()
     elif [ $secs -gt 0 ] ; then
         printf "(%s seconds)" $secs
     fi
-    echo -e " ####${color_reset}"
-    echo
+    printf " ####${color_reset}\n\n"
     return $ret
+}
+
+function make()
+{
+    mk_timer $(get_make_command) "$@"
 }
 
 if [ "x$SHELL" != "x/bin/bash" ]; then
