@@ -1580,8 +1580,26 @@ $(INTERNAL_OTA_PACKAGE_TARGET): $(BUILT_TARGET_FILES_PACKAGE) $(DISTTOOLS)
 	   $(if $(OEM_OTA_CONFIG), -o $(OEM_OTA_CONFIG)) \
 	   $(BUILT_TARGET_FILES_PACKAGE) $@
 
-.PHONY: otapackage
+CARBON_CODENAME := LUX
+
+ifndef CARBON_BUILDTYPE
+  CARBON_BUILDTYPE := UNOFFICIAL
+endif
+
+ifeq ($(CARBON_BUILDTYPE), RELEASE)
+  CARBON_VERSION := $(CARBON_CODENAME)-$(shell date -u +%Y%m%d)-$(shell date -u +%H%M)
+else
+  CARBON_VERSION := $(CARBON_CODENAME)-$(CARBON_BUILDTYPE)-$(shell date -u +%Y%m%d)-$(shell date -u +%H%M)
+endif
+
+CARBON_TARGET_PACKAGE := $(PRODUCT_OUT)/CARBON-$(CARBON_VERSION).zip
+
+.PHONY: otapackage bacon
 otapackage: $(INTERNAL_OTA_PACKAGE_TARGET)
+carbon: otapackage
+	$(hide) ln -f $(INTERNAL_OTA_PACKAGE_TARGET) $(CARBON_TARGET_PACKAGE)
+	$(hide) $(MD5SUM) $(CARBON_TARGET_PACKAGE) > $(CARBON_TARGET_PACKAGE).md5sum
+	@echo -e ${CL_CYN}"Package Complete: $(CARBON_TARGET_PACKAGE)"${CL_RST}
 
 endif    # recovery_fstab is defined
 endif    # TARGET_NO_KERNEL != true
