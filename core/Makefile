@@ -1587,14 +1587,14 @@ ifndef CARBON_BUILDTYPE
 endif
 
 ifeq ($(CARBON_BUILDTYPE), RELEASE)
-  CARBON_VERSION := $(CARBON_CODENAME)-$(shell date -u +%Y%m%d)-$(shell date -u +%H%M)
+  CARBON_VERSION := $(CARBON_CODENAME)-$(TARGET_PRODUCT)-$(shell date -u +%Y%m%d)-$(shell date -u +%H%M)
 else
-  CARBON_VERSION := $(CARBON_CODENAME)-$(CARBON_BUILDTYPE)-$(shell date -u +%Y%m%d)-$(shell date -u +%H%M)
+  CARBON_VERSION := $(CARBON_CODENAME)-$(CARBON_BUILDTYPE)-$(TARGET_PRODUCT)-$(shell date -u +%Y%m%d)-$(shell date -u +%H%M)
 endif
 
 CARBON_TARGET_PACKAGE := $(PRODUCT_OUT)/CARBON-$(CARBON_VERSION).zip
 
-.PHONY: otapackage bacon
+.PHONY: otapackage carbon
 otapackage: $(INTERNAL_OTA_PACKAGE_TARGET)
 carbon: otapackage
 	$(hide) ln -f $(INTERNAL_OTA_PACKAGE_TARGET) $(CARBON_TARGET_PACKAGE)
