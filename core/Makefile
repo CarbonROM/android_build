@@ -1594,6 +1594,41 @@ endif
 
 CARBON_TARGET_PACKAGE := $(PRODUCT_OUT)/CARBON-$(CARBON_VERSION).zip
 
+# This is for PhaseBurn
+.PHONY: sandwich measandwich
+sandwich:
+	@echo ""
+	@echo -e ${CL_CYN}"                  Make me a sandwich.                              "${CL_RST}
+	@echo -e ${CL_CYN}"                          |                                        "${CL_RST}
+	@echo -e ${CL_CYN}"                          |		       What? Make it yourself."${CL_RST}
+	@echo -e ${CL_CYN}"                          |                             |          "${CL_RST}
+	@echo -e ${CL_CYN}"          sudo make me a sandwich.                      |          "${CL_RST}
+	@echo -e ${CL_CYN}"                          |                             |          "${CL_RST}
+	@echo -e ${CL_CYN}"                          |                           Okay         "${CL_RST}
+	@echo -e ${CL_CYN}"                          |                              \         "${CL_RST}
+	@echo -e ${CL_CYN}"                          |                              :#.       "${CL_RST}
+	@echo -e ${CL_CYN}"                          |                             ;\` .#      "${CL_RST}
+	@echo -e ${CL_CYN}"                          |                             +   '      "${CL_RST}
+	@echo -e ${CL_CYN}"                          |                            \`.   '      "${CL_RST}
+	@echo -e ${CL_CYN}"                         ,,                            ,    +      "${CL_RST}
+	@echo -e ${CL_CYN}"                        #\` @                           ,\`   @      "${CL_RST}
+	@echo -e ${CL_CYN}"                       ,    #                          \`;  .,      "${CL_RST}
+	@echo -e ${CL_CYN}"                       ;    +                           :#+#       "${CL_RST}
+	@echo -e ${CL_CYN}"                    :#+;,   :                             @        "${CL_RST}
+	@echo -e ${CL_CYN}"                    #  .@\`  +                            ,+#       "${CL_RST}
+	@echo -e ${CL_CYN}"                    +   #+##.                            #+..      "${CL_RST}
+	@echo -e ${CL_CYN}"                    '   \`'#                              ;+ #      "${CL_RST}
+	@echo -e ${CL_CYN}"                    ,    +#.,@::++                     .. #  ;.    "${CL_RST}
+	@echo -e ${CL_CYN}"                    .    @    \`,@ #                    #  :\`       "${CL_RST}
+	@echo -e ${CL_CYN}"                    \`     ,#@#+#+'                       ; #       "${CL_RST}
+	@echo -e ${CL_CYN}"                    .            .#                     .  \`.      "${CL_RST}
+	@echo -e ${CL_CYN}"                    \`            ,\`,                    +   #      "${CL_RST}
+	@echo -e ${CL_CYN}"                    :     \`\`\` \`  ; #                    ;   +      "${CL_RST}
+	@echo -e ${CL_CYN}"                     @@#;,...,:@@,  \`                   ,   ,\`     "${CL_RST}
+	@echo -e ${CL_CYN}"                      #,       #'                                  "${CL_RST}
+	@echo -e ${CL_CYN}"                      \`        \`                                   "${CL_RST}
+measandwich: sandwich
+
 .PHONY: otapackage carbon
 otapackage: $(INTERNAL_OTA_PACKAGE_TARGET)
 carbon: otapackage
