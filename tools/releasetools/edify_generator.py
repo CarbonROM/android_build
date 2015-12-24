@@ -117,11 +117,13 @@ class EdifyGenerator(object):
 
   def AssertDevice(self, device):
     """Assert that the device identifier is the given string."""
-    cmd = ('getprop("ro.product.device") == "%s" || '
-           'abort("This package is for \\"%s\\" devices; '
-           'this is a \\"" + getprop("ro.product.device") + "\\".");') % (
-               device, device)
-    self.script.append(cmd)
+    cmd = ('(' +
+           ' || \0'.join(['getprop("ro.product.device") == "%s" || getprop("ro.build.product") == "%s"'
+                         % (i, i) for i in device.split(",")]) +
+           ') || abort("This package is for \\"%s\\" devices\n'
+           'this is a \\"" + getprop("ro.product.device") + "\\".");'
+           ) % (device)
+    self.script.append(self.WordWrap(cmd))
 
   def AssertSomeBootloader(self, *bootloaders):
     """Asert that the bootloader version is one of *bootloaders."""
@@ -130,6 +132,14 @@ class EdifyGenerator(object):
                          for b in bootloaders]) +
            ");")
     self.script.append(self.WordWrap(cmd))
+
+  def RunBackup(self, command):
+    self.script.append('package_extract_file("system/bin/backuptool.sh", "/system/bin/backuptool.sh");')
+    self.script.append('package_extract_file("system/bin/backuptool.functions", "/tmp/backuptool.functions");')
+    self.SetPermissions("/system/bin/backuptool.sh", 0, 0, 0755, None, None)
+    self.script.append(('run_program("/system/bin/backuptool.sh", "%s");' % command))
+    if command == "restore":
+      self.DeleteFiles(["/tmp/backuptool.functions"])
 
   def ShowProgress(self, frac, dur):
     """Update the progress bar, advancing it over 'frac' over the next
@@ -165,7 +175,7 @@ class EdifyGenerator(object):
     self.script.append(('apply_patch_space(%d) || abort("Not enough free space '
                         'on /system to apply patches.");') % (amount,))
 
-  def Mount(self, mount_point, mount_options_by_format=""):
+  def Mount(self, mount_point, mount_by_label = False, mount_options_by_format=""):
     """Mount the partition with the given mount_point.
       mount_options_by_format:
       [fs_type=option[,option]...[|fs_type=option[,option]...]...]
@@ -175,19 +185,25 @@ class EdifyGenerator(object):
     fstab = self.fstab
     if fstab:
       p = fstab[mount_point]
-      mount_dict = {}
-      if mount_options_by_format is not None:
-        for option in mount_options_by_format.split("|"):
-          if "=" in option:
-            key, value = option.split("=", 1)
-            mount_dict[key] = value
-      mount_flags = mount_dict.get(p.fs_type, "")
-      if p.context is not None:
-        mount_flags = p.context + ("," + mount_flags if mount_flags else "")
-      self.script.append('mount("%s", "%s", "%s", "%s", "%s");' % (
-          p.fs_type, common.PARTITION_TYPES[p.fs_type], p.device,
-          p.mount_point, mount_flags))
+      if mount_by_label:
+        self.script.append('run_program("/sbin/mount", "%s");' % (mount_point,))
+      else:
+        mount_dict = {}
+        if mount_options_by_format is not None:
+          for option in mount_options_by_format.split("|"):
+            if "=" in option:
+              key, value = option.split("=", 1)
+              mount_dict[key] = value
+        self.script.append('mount("%s", "%s", "%s", "%s", "%s");' %
+                         (p.fs_type, common.PARTITION_TYPES[p.fs_type],
+                          p.device, p.mount_point, mount_dict.get(p.fs_type, "")))
       self.mounts.add(p.mount_point)
+
+  def Unmount(self, mount_point):
+    """Unmount the partiiton with the given mount_point."""
+    if mount_point in self.mounts:
+      self.mounts.remove(mount_point)
+      self.script.append('unmount("%s");' % (mount_point,))
 
   def UnpackPackageDir(self, src, dst):
     """Unpack a given directory from the OTA package into the given
@@ -216,16 +232,21 @@ class EdifyGenerator(object):
         '"%s") || abort("Failed to tune partition %s");' % (
             p.device, partition))
 
-  def FormatPartition(self, partition):
+  def FormatPartition(self, partition, mount_by_label = False):
     """Format the given partition, specified by its mount point (eg,
     "/system")."""
 
     fstab = self.fstab
     if fstab:
       p = fstab[partition]
-      self.script.append('format("%s", "%s", "%s", "%s", "%s");' %
-                         (p.fs_type, common.PARTITION_TYPES[p.fs_type],
-                          p.device, p.length, p.mount_point))
+      if mount_by_label:
+        if not p.mount_point in self.mounts:
+          self.script.mount(p.mount_point)
+        self.script.append('run_program("/sbin/rm", "-rf", "%s");' % (p.mount_point,))
+      else:
+        self.script.append('format("%s", "%s", "%s", "%s", "%s");' %
+                           (p.fs_type, common.PARTITION_TYPES[p.fs_type],
+                            p.device, p.length, p.mount_point))
 
   def WipeBlockDevice(self, partition):
     if partition not in ("/system", "/vendor"):
@@ -301,6 +322,11 @@ class EdifyGenerator(object):
         else:
           self.script.append(
               'package_extract_file("%(fn)s", "%(device)s");' % args)
+      elif partition_type == "BML":
+          self.script.append(
+            ('assert(package_extract_file("%(fn)s", "/tmp/%(device)s.img"),\n'
+             '       write_raw_image("/tmp/%(device)s.img", "%(device)s"),\n'
+             '       delete("/tmp/%(device)s.img"));') % args)
       else:
         raise ValueError(
             "don't know how to write \"%s\" partitions" % p.fs_type)
