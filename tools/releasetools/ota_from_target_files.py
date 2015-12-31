@@ -143,6 +143,7 @@ OPTIONS.worker_threads = multiprocessing.cpu_count() // 2
 if OPTIONS.worker_threads == 0:
   OPTIONS.worker_threads = 1
 OPTIONS.backuptool = False
+OPTIONS.flashsu = False
 OPTIONS.override_device = 'auto'
 OPTIONS.override_prop = False
 OPTIONS.override_boot_partition = ''
@@ -743,6 +744,14 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
   script.Print("Flashing boot.img")
   bootpartition = "/boot" if OPTIONS.override_boot_partition == "" else OPTIONS.override_boot_partition
   script.WriteRawImage(bootpartition, "boot.img")
+
+  if OPTIONS.flashsu:
+    if block_based:
+      script.Print("Flashing SuperSU...")
+      common.ZipWriteStr(output_zip, "supersu/supersu.zip",
+                     ""+input_zip.read("SYSTEM/addon.d/UPDATE-SuperSU.zip"))
+      script.Mount("/system")
+      script.FlashSuperSU()
 
   script.ShowProgress(0.1, 0)
   script.Print("Enjoy Carbon ROM!");
@@ -1626,6 +1635,8 @@ def main(argv):
                          "integers are allowed." % (a, o))
     elif o in ("--backup"):
       OPTIONS.backuptool = bool(a.lower() == 'true')
+    elif o in ("--flashsu"):
+      OPTIONS.flashsu = bool(a.lower() == 'true')
     elif o in ("--override_device"):
       OPTIONS.override_device = a
     elif o in ("--override_prop"):
