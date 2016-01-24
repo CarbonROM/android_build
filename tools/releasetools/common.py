@@ -317,10 +317,10 @@ def LoadRecoveryFSTab(read_helper, fstab_version, recovery_fstab_path,
       if not line or line.startswith("#"):
         continue
       pieces = line.split()
-      if not 3 <= len(pieces) <= 4:
+      if not (3 <= len(pieces) <= 7):
         raise ValueError("malformed recovery.fstab line: \"%s\"" % (line,))
       options = None
-      if len(pieces) >= 4:
+      if len(pieces) >= 4 and pieces[3] != 'NULL':
         if pieces[3].startswith("/"):
           device2 = pieces[3]
           if len(pieces) >= 5:
@@ -551,7 +551,8 @@ def GetBootableImage(name, prebuilt_name, unpack_dir, tree_subdir,
   custom_bootimg_mk = os.getenv('MKBOOTIMG')
   if custom_bootimg_mk:
     bootimage_path = os.path.join(os.getenv('OUT'), "boot.img")
-    os.mkdir(prebuilt_dir)
+    if not os.path.exists(prebuilt_dir):
+      os.mkdir(prebuilt_dir)
     shutil.copyfile(bootimage_path, prebuilt_path)
   if os.path.exists(prebuilt_path):
     print "using prebuilt %s from BOOTABLE_IMAGES..." % (prebuilt_name,)
@@ -1599,14 +1600,16 @@ class BlockDifference(object):
 DataImage = blockimgdiff.DataImage
 
 # map recovery.fstab's fs_types to mount/format "partition types"
-PARTITION_TYPES = {
-    "yaffs2": "MTD",
-    "mtd": "MTD",
-    "ext4": "EMMC",
-    "emmc": "EMMC",
-    "f2fs": "EMMC",
-    "squashfs": "EMMC"
-}
+PARTITION_TYPES = { "bml": "BML",
+                    "ext2": "EMMC",
+                    "ext3": "EMMC",
+                    "ext4": "EMMC",
+                    "emmc": "EMMC",
+                    "mtd": "MTD",
+                    "f2fs": "EMMC",
+                    "yaffs2": "MTD",
+                    "vfat": "EMMC",
+                    "squashfs": "EMMC" }
 
 def GetTypeAndDevice(mount_point, info):
   fstab = info["fstab"]
