@@ -74,10 +74,6 @@ Usage:  ota_from_target_files [flags] input_target_files output_ota_package
       Enable or disable the execution of backuptool.sh.
       Disabled by default.
 
-  --flashsu <boolean>
-      Enable or disable flashing the SU zip.
-      Disabled by default.
-
   --override_device <device>
       Override device-specific asserts. Can be a comma-separated list.
 
@@ -1687,7 +1683,6 @@ def main(argv):
                                  "worker_threads=",
                                  "aslr_mode=",
                                  "backup=",
-                                 "flashsu=",
                                  "override_device=",
                                  "override_prop=",
                                  "override_boot_partition=",
