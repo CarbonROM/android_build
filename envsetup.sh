@@ -120,11 +120,7 @@ function cmremote()
 function crremote()
 {
     git remote rm crremote 2> /dev/null
-    if [ ! -d .git ]
-    then
-        echo .git directory not found. Please run this from the root directory of the Android repository you wish to set up.
-    fi
-    GERRIT_REMOTE=$(cat .git/config  | grep git://github.com | awk '{ print $NF }' | sed s#git://github.com/##g)
+    GERRIT_REMOTE=$(git config --get remote.carbon.projectname)
     if [ -z "$GERRIT_REMOTE" ]
     then
         echo Unable to set up the git remote, are you in the root of the repo?
