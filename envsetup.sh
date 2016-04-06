@@ -201,6 +201,22 @@ function crremote()
     echo You can now push to "crremote".
  }
 
+function aospremote()
+{
+    git remote rm aosp 2> /dev/null
+    if [ ! -d .git ]
+    then
+        echo .git directory not found. Please run this from the root directory of the Android repository you wish to set up.
+    fi
+    PROJECT=`pwd -P | sed s#$ANDROID_BUILD_TOP/##g`
+    if (echo $PROJECT | grep -qv "^device")
+    then
+        PFX="platform/"
+    fi
+    git remote add aosp https://android.googlesource.com/$PFX$PROJECT
+    echo "Remote 'aosp' created"
+}
+
 function mka() {
    local T=$(gettop)
    if [ "$T" ]; then
@@ -1741,3 +1757,5 @@ check_bash_version && {
     fi
     done
 }
+
+export ANDROID_BUILD_TOP=$(gettop)
