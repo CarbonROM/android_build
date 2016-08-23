@@ -659,20 +659,6 @@ function lunch()
     check_variant $variant
     if [ $? -ne 0 ]
     then
-       # if we can't find the product, try to grab it from our github
-      T=$(gettop)
-      pushd $T > /dev/null
-      build/tools/roomservice.py $variant
-      popd > /dev/null
-      check_variant $variant
-    else
-      T=$(gettop)
-      pushd $T > /dev/null
-      build/tools/roomservice.py $variant true
-      popd > /dev/null
-    fi
-    if [ $? -ne 0 ]
-    then
         echo
         echo "** Invalid variant: '$variant'"
         echo "** Must be one of ${VARIANT_CHOICES[@]}"
@@ -683,6 +669,20 @@ function lunch()
     TARGET_PRODUCT=$product \
     TARGET_BUILD_VARIANT=$variant \
     build_build_var_cache
+    if [ $? -ne 0 ]
+    then
+        # if we can't find the product, try to grab it from our github
+        T=$(gettop)
+        pushd $T > /dev/null
+        build/tools/roomservice.py $product
+        popd > /dev/null
+        check_variant $product
+    else
+        T=$(gettop)
+        pushd $T > /dev/null
+        build/tools/roomservice.py $product true
+        popd > /dev/null
+    fi
     if [ $? -ne 0 ]
     then
         echo
