@@ -51,7 +51,10 @@ gerrit_url = "review.carbonrom.org"
 
 
 def check_repo_exists(git_data, device):
-    re_match = "^android_device_.*_{device}$".format(device=device)
+    re_match = "^{android_team}/android_device_.*_{device}$".format(
+        android_team=android_team,
+        device=device
+    )
     matches = filter(lambda x: re.match(re_match, x), git_data)
     if len(matches) != 1:
         raise Exception("{device} not found,"
@@ -84,7 +87,10 @@ def search_gerrit_for_device(device):
 
 
 def parse_device_directory(device_url, device):
-    pattern = "^android_device_(?P<vendor>.+)_{}$".format(device)
+    pattern = "^{android_team}/android_device_(?P<vendor>.+)_{device}$".format(
+        android_team=android_team,
+        device=device
+    )
     match = re.match(pattern, device_url)
 
     if match is None:
@@ -184,7 +190,7 @@ def write_to_manifest(manifest):
 def parse_device_from_manifest(device):
     for project in iterate_manifests():
         name = project.get('name')
-        if name.startswith("android_device_") and name.endswith(device):
+        if name.startswith("{android_team}/android_device_".format(android_team=android_team)) and name.endswith(device):
             return project.get('path')
     return None
 
@@ -207,7 +213,7 @@ def parse_device_from_folder(device):
 
 
 def parse_dependency_file(location):
-    dep_file = "omni.dependencies"
+    dep_file = "carbon.dependencies"
     dep_location = '/'.join([location, dep_file])
     if not os.path.isfile(dep_location):
         print("WARNING: %s file not found" % dep_location)
@@ -265,11 +271,11 @@ def create_dependency_manifest(dependencies):
             write_to_manifest(manifest)
             projects.append(target_path)
     if len(projects) > 0:
-        os.system("repo sync -f --no-clone-bundle %s" % " ".join(projects))
+        os.system("repo sync --force-sync -f --no-clone-bundle %s" % " ".join(projects))
 
 
 def create_common_dependencies_manifest(dependencies):
-    dep_file = "omni.dependencies"
+    dep_file = "carbon.dependencies"
     common_list = []
     if dependencies is not None:
         for dependency in dependencies:
@@ -321,6 +327,10 @@ def fetch_device(device):
     git_data = search_gerrit_for_device(device)
     if git_data is not None:
         device_url = git_data['id']
+        # gerrit returns / as %2F, so fix that
+        # I'm python, the worlds most retarded coding language ever and I am to stupid to replace parts in a string
+        tmp = device_url.split("%2F")
+        device_url = "{tmp1}/{tmp2}".format(tmp1=tmp[0], tmp2=tmp[1])
         device_dir = parse_device_directory(device_url, device)
         project = create_manifest_project(device_url,
                                       device_dir,
@@ -331,7 +341,7 @@ def fetch_device(device):
         # In case a project was written to manifest, but never synced
         if project is not None or not check_target_exists(device_dir):
             print("syncing the device config")
-            os.system('repo sync -f --no-clone-bundle %s' % device_dir)
+            os.system('repo sync --force-sync -f --no-clone-bundle %s' % device_dir)
 
 
 if __name__ == '__main__':
