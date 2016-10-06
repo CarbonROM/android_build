@@ -471,7 +471,12 @@ MAINDEXCLASSES := $(HOST_OUT_EXECUTABLES)/mainDexClasses
 
 # Always use prebuilts for ckati and makeparallel
 prebuilt_build_tools := prebuilts/build-tools
+ifeq ($(filter address,$(SANITIZE_HOST)),)
 prebuilt_build_tools_bin := $(prebuilt_build_tools)/$(HOST_PREBUILT_TAG)/bin
+else
+prebuilt_build_tools_bin := $(prebuilt_build_tools)/$(HOST_PREBUILT_TAG)/asan/bin
+endif
+
 CKATI := $(prebuilt_build_tools_bin)/ckati
 MAKEPARALLEL := $(prebuilt_build_tools_bin)/makeparallel
 
