@@ -1160,7 +1160,7 @@ FULL_SYSTEMIMAGE_DEPS := $(INTERNAL_SYSTEMIMAGE_FILES) $(INTERNAL_USERIMAGES_DEP
 
 ifdef BOARD_USES_SYSTEMIMAGE_SQUISHER
 	FULL_SYSTEMIMAGE_DEPS += systemimage-squisher
-fi
+endif
 
 # -----------------------------------------------------------------
 # installed file list
