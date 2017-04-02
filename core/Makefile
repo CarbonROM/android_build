@@ -2185,7 +2185,7 @@ carbon: otapackage
 	@echo -e ${CL_YLW}"════════════════════════════════════════════════════════════════════════════════"${CL_RST}
 	@echo -e ${CL_CYN}"Package zip: "${CL_MAG} $(CARBON_TARGET_PACKAGE)                                 ${CL_RST}
 	@echo -e ${CL_CYN}"Package md5: "${CL_MAG}" `cat $(CARBON_TARGET_PACKAGE).md5sum | cut -d ' ' -f 1`"${CL_RST}
-	@echo -e ${CL_CYN}"Package size:"${CL_MAG}" `ls -lah $(CARBON_TARGET_PACKAGE) | cut -d ' ' -f 5`   "${CL_RST}
+	@echo -e ${CL_CYN}"Package size:"${CL_MAG}" `du -h $(CARBON_TARGET_PACKAGE) | cut -f 1`            "${CL_RST}
 	@echo -e ${CL_YLW}"════════════════════════════════════════════════════════════════════════════════"${CL_RST}
 
 endif    # build_ota_package
