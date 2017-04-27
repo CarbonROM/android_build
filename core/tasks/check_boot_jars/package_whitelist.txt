@@ -110,6 +110,9 @@ libcore\..*
 android\..*
 com\.android\..*
 
+# CAF
+org\.codeaurora\..*
+
 
 ###################################################
 # core-junit.jar
