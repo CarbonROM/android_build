@@ -22,13 +22,20 @@ endif
 LOCAL_PATH := $(BUILD_SYSTEM)
 
 # Pick a reasonable string to use to identify files.
-ifneq "" "$(filter eng.%,$(BUILD_NUMBER))"
+ifneq ($(filter $(CARBON_BUILD) eng.%,$(BUILD_NUMBER)),)
   # BUILD_NUMBER has a timestamp in it, which means that
   # it will change every time.  Pick a stable value.
   FILE_NAME_TAG := eng.$(USER)
 else
   FILE_NAME_TAG := $(BUILD_NUMBER)
 endif
+
+export CARBON_BUILD = $(CARBON_BUILD)
+export TARGET_OTA_ASSERT_DEVICE = $(TARGET_OTA_ASSERT_DEVICE)
+export TARGET_UNIFIED_DEVICE = $(TARGET_UNIFIED_DEVICE)
+export TARGET_DEVICE = $(TARGET_DEVICE)
+export TARGET_SETS_FSTAB = $(TARGET_SETS_FSTAB)
+export CARBON_VERSION = $(CARBON_VERSION)
 
 # -----------------------------------------------------------------
 # Define rules to copy PRODUCT_COPY_FILES defined by the product.
