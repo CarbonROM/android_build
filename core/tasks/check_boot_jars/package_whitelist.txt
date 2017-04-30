@@ -113,6 +113,8 @@ com\.android\..*
 # CAF
 org\.codeaurora\..*
 
+#AliPay
+org\.ifaa\.android\.manager
 
 ###################################################
 # core-junit.jar
