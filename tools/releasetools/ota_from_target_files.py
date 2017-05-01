@@ -1332,6 +1332,9 @@ def WriteABOTAPackageWithBrilloScript(target_file, output_file,
   # A/B updater expects a signing key in RSA format. Gets the key ready for
   # later use in step 3, unless a payload_signer has been specified.
   if OPTIONS.payload_signer is None:
+    key_passwords = common.GetKeyPasswords([OPTIONS.package_key])
+    pw = key_passwords[OPTIONS.package_key]
+
     cmd = ["openssl", "pkcs8",
            "-in", OPTIONS.package_key + OPTIONS.private_key_suffix,
            "-inform", "DER", "-nocrypt"]
@@ -1339,7 +1342,17 @@ def WriteABOTAPackageWithBrilloScript(target_file, output_file,
     cmd.extend(["-out", rsa_key])
     p1 = common.Run(cmd, stdout=subprocess.PIPE)
     p1.wait()
-    assert p1.returncode == 0, "openssl pkcs8 failed"
+    if p1.returncode == 0:
+      # Definitely an unencrypted key.
+    else:
+      cmd = ["openssl", "pkcs8",
+           "-in", OPTIONS.package_key + OPTIONS.private_key_suffix,
+           "-inform", "DER", "-passin", "-pass:" + pw]
+      rsa_key = common.MakeTempFile(prefix="key-", suffix=".key")
+      cmd.extend(["-out", rsa_key])
+      p1 = common.Run(cmd, stdout=subprocess.PIPE)
+      p1.wait()
+      assert p1.returncode == 0, "openssl pkcs8 failed"
 
   # Stage the output zip package for package signing.
   temp_zip_file = tempfile.NamedTemporaryFile()
