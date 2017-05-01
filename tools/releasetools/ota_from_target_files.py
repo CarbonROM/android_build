@@ -1334,7 +1334,7 @@ def WriteABOTAPackageWithBrilloScript(target_file, output_file,
   if OPTIONS.payload_signer is None:
     cmd = ["openssl", "pkcs8",
            "-in", OPTIONS.package_key + OPTIONS.private_key_suffix,
-           "-inform", "DER", "-nocrypt"]
+           "-inform", "DER"]
     rsa_key = common.MakeTempFile(prefix="key-", suffix=".key")
     cmd.extend(["-out", rsa_key])
     p1 = common.Run(cmd, stdout=subprocess.PIPE)
