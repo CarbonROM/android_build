@@ -198,6 +198,7 @@ OPTIONS.gen_verify = False
 OPTIONS.log_diff = None
 OPTIONS.payload_signer = None
 OPTIONS.payload_signer_args = []
+OPTIONS.key_passwords = []
 
 def MostPopularKey(d, default):
   """Given a dict, return the key corresponding to the largest
@@ -468,8 +469,7 @@ def CopyPartitionFiles(itemset, input_zip, output_zip=None, substitute=None):
 
 
 def SignOutput(temp_zip_name, output_zip_name):
-  key_passwords = common.GetKeyPasswords([OPTIONS.package_key])
-  pw = key_passwords[OPTIONS.package_key]
+  pw = OPTIONS.key_passwords[OPTIONS.package_key]
 
   common.SignFile(temp_zip_name, output_zip_name, OPTIONS.package_key, pw,
                   whole_file=True)
@@ -1323,21 +1323,17 @@ def WriteABOTAPackageWithBrilloScript(target_file, output_file,
                                       source_file=None):
   """Generate an Android OTA package that has A/B update payload."""
 
-  # Setup signing keys.
-  if OPTIONS.package_key is None:
-    OPTIONS.package_key = OPTIONS.info_dict.get(
-        "default_system_dev_certificate",
-        "build/target/product/security/testkey")
-
   # A/B updater expects a signing key in RSA format. Gets the key ready for
   # later use in step 3, unless a payload_signer has been specified.
   if OPTIONS.payload_signer is None:
     cmd = ["openssl", "pkcs8",
            "-in", OPTIONS.package_key + OPTIONS.private_key_suffix,
-           "-inform", "DER", "-nocrypt"]
+           "-inform", "DER"]
+    pw = OPTIONS.key_passwords[OPTIONS.package_key]
+    cmd.extend(["-passin", "pass:" + pw] if pw else ["-nocrypt"])
     rsa_key = common.MakeTempFile(prefix="key-", suffix=".key")
     cmd.extend(["-out", rsa_key])
-    p1 = common.Run(cmd, stdout=subprocess.PIPE)
+    p1 = common.Run(cmd, verbose=False, stdout=subprocess.PIPE)
     p1.wait()
     assert p1.returncode == 0, "openssl pkcs8 failed"
 
@@ -2187,6 +2183,17 @@ def main(argv):
 
   ab_update = OPTIONS.info_dict.get("ab_update") == "true"
 
+  # Use the default key to sign the package if not specified with package_key.
+  # package_keys are needed on ab_updates, so always define them if an
+  # ab_update is getting created.
+  if not OPTIONS.no_signing or ab_update:
+    if OPTIONS.package_key is None:
+      OPTIONS.package_key = OPTIONS.info_dict.get(
+          "default_system_dev_certificate",
+          "build/target/product/security/testkey")
+    # Get signing keys
+    OPTIONS.key_passwords = common.GetKeyPasswords([OPTIONS.package_key])
+
   if ab_update:
     if OPTIONS.incremental_source is not None:
       OPTIONS.target_info_dict = OPTIONS.info_dict
@@ -2244,13 +2251,6 @@ def main(argv):
   if OPTIONS.info_dict.get("no_recovery") == "true":
     raise common.ExternalError(
         "--- target build has specified no recovery ---")
-
-  # Use the default key to sign the package if not specified with package_key.
-  if not OPTIONS.no_signing:
-    if OPTIONS.package_key is None:
-      OPTIONS.package_key = OPTIONS.info_dict.get(
-          "default_system_dev_certificate",
-          "build/target/product/security/testkey")
 
   # Set up the output zip. Create a temporary zip file if signing is needed.
   if OPTIONS.no_signing:
