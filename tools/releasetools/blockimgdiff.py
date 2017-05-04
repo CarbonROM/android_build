@@ -53,12 +53,13 @@ def compute_patch(src, tgt, imgdiff=False):
       os.unlink(patchfile)
     except OSError:
       pass
-    if imgdiff:
-      p = subprocess.call(["imgdiff", "-z", srcfile, tgtfile, patchfile],
-                          stdout=open("/dev/null", "a"),
-                          stderr=subprocess.STDOUT)
-    else:
-      p = subprocess.call(["bsdiff", srcfile, tgtfile, patchfile])
+    cmd = ['imgdiff', '-z'] if imgdiff else ['bsdiff']
+    cmd.extend([srcfile, tgtfile, patchfile])
+
+    # Don't dump the bsdiff/imgdiff commands, which are not useful for the case
+    # here, since they contain temp filenames only.
+    p = common.Run(cmd, verbose=False, stdout=subprocess.PIPE,
+                   stderr=subprocess.STDOUT)
 
     if p:
       raise ValueError("diff failed: " + str(p))
