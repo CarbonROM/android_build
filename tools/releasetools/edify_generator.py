@@ -149,10 +149,7 @@ class EdifyGenerator(object):
     self.script.append(self.WordWrap(cmd))
 
   def RunBackup(self, command):
-    self.script.append('package_extract_file("system/bin/backuptool.sh", "/system/bin/backuptool.sh");')
-    self.script.append('package_extract_file("system/bin/backuptool.functions", "/tmp/backuptool.functions");')
-    self.SetPermissions("/system/bin/backuptool.sh", 0, 0, 0755, None, None)
-    self.script.append(('run_program("/system/bin/backuptool.sh", "%s");' % command))
+    self.script.append(('run_program("/tmp/install/bin/backuptool.sh", "%s");' % command))
     if command == "restore":
       self.DeleteFiles(["/tmp/backuptool.functions"])
 
