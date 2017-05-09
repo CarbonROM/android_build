@@ -599,6 +599,14 @@ def GetImage(which, tmpdir, info_dict):
 
   return sparse_img.SparseImage(path, mappath, clobbered_blocks)
 
+def CopyInstallTools(output_zip):
+  oldcwd = os.getcwd()
+  os.chdir(os.getenv('OUT'))
+  for root, subdirs, files in os.walk("install"):
+    for f in files:
+      p = os.path.join(root, f)
+      output_zip.write(p, p)
+  os.chdir(oldcwd)
 
 def WriteFullOTAPackage(input_zip, output_zip):
   # TODO: how to determine this?  We don't know what version it will
@@ -707,11 +715,15 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
 
   device_specific.FullOTA_InstallBegin()
 
+  CopyInstallTools(output_zip)
+  script.UnpackPackageDir("install", "/tmp/install")
+  script.SetPermissionsRecursive("/tmp/install", 0, 0, 0755, 0644, None, None)
+  script.SetPermissionsRecursive("/tmp/install/bin", 0, 0, 0755, 0755, None, None)
+
   if OPTIONS.backuptool:
-    script.Mount("/system", OPTIONS.mount_by_label)
+    script.Mount("/system")
     script.RunBackup("backup")
-    if not OPTIONS.mount_by_label:
-      script.Unmount("/system")
+    script.Unmount("/system")
 
   script.ShowProgress(0.5, 0)
 
@@ -825,8 +837,12 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
   common.ZipWriteStr(output_zip, "boot.img", boot_img.data)
 
   if OPTIONS.backuptool:
-    script.ShowProgress(0.2, 10)
+    script.ShowProgress(0.02, 10)
+    if block_based:
+      script.Mount("/system")
     script.RunBackup("restore")
+    if block_based:
+      script.Unmount("/system")
 
   script.ShowProgress(0.2, 10)
   script.Print("Flashing boot.img")
