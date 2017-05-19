@@ -148,14 +148,6 @@ class EdifyGenerator(object):
            ");")
     self.script.append(self.WordWrap(cmd))
 
-  def RunBackup(self, command):
-    self.script.append('package_extract_file("system/bin/backuptool.sh", "/system/bin/backuptool.sh");')
-    self.script.append('package_extract_file("system/bin/backuptool.functions", "/tmp/backuptool.functions");')
-    self.SetPermissions("/system/bin/backuptool.sh", 0, 0, 0755, None, None)
-    self.script.append(('run_program("/system/bin/backuptool.sh", "%s");' % command))
-    if command == "restore":
-      self.DeleteFiles(["/tmp/backuptool.functions"])
-
   def ShowProgress(self, frac, dur):
     """Update the progress bar, advancing it over 'frac' over the next
     'dur' seconds.  'dur' may be zero to advance it via SetProgress
@@ -226,12 +218,6 @@ class EdifyGenerator(object):
                          (p.fs_type, common.PARTITION_TYPES[p.fs_type],
                           p.device, p.mount_point, mount_dict.get(p.fs_type, "")))
       self.mounts.add(p.mount_point)
-
-  def Unmount(self, mount_point):
-    """Unmount the partiiton with the given mount_point."""
-    if mount_point in self.mounts:
-      self.mounts.remove(mount_point)
-      self.script.append('unmount("%s");' % (mount_point,))
 
   def UnpackPackageDir(self, src, dst):
     """Unpack a given directory from the OTA package into the given
